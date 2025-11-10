@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Rol)
     private readonly rolRepository: Repository<Rol>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<User> {
@@ -50,7 +52,7 @@ export class AuthService {
     return result as User;
   }
 
-  async login(loginDto: LoginDto): Promise<User> {
+  async login(loginDto: LoginDto) {
     const userExists = await this.userRepository.findOne({
       where: { email: loginDto.email },
       select: [
@@ -77,6 +79,18 @@ export class AuthService {
       throw new BadRequestException('Credenciales invalidas');
     }
     const { password: _, ...result } = userExists;
-    return result as User;
+    return {
+      user: result as User,
+      access_token: this.generateToken(userExists),
+    };
+  }
+
+  private generateToken(user: User): string {
+    const payload = {
+      id: user.id,
+      email: user.email,
+      rol: user.rol.name,
+    };
+    return this.jwtService.sign(payload);
   }
 }
