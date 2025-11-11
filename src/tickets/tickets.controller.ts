@@ -26,8 +26,9 @@ export class TicketsController {
   }
 
   @Get()
-  findAll() {
-    return this.ticketsService.findAll();
+  @UseGuards(JwtAuthGuard)
+  findAll(@GetUser() user: User) {
+    return this.ticketsService.findAll(user);
   }
 
   @Get(':id')

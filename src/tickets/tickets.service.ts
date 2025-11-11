@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tickets, TicketStatus } from 'src/entities/ticket.entity';
 import { User } from 'src/entities/user.entity';
+import { UserRol } from 'src/entities/rol.entity';
 
 @Injectable()
 export class TicketsService {
@@ -29,8 +30,27 @@ export class TicketsService {
     return await this.ticketsRepository.save(newTicket);
   }
 
-  findAll() {
-    return `This action returns all tickets`;
+  async findAll(user: User): Promise<Tickets[]> {
+    // Si es Supervisor, devuelve todos los tickets
+    if (user.rol.name === UserRol.SUPERVISOR) {
+      return await this.ticketsRepository.find({
+        relations: ['user', 'assignedTo'],
+      });
+    }
+
+    // Si es Soportista, devuelve los tickets asignados a él
+    if (user.rol.name === UserRol.SOPORTISTA) {
+      return await this.ticketsRepository.find({
+        where: { assignedTo: { id: user.id } },
+        relations: ['user', 'assignedTo'],
+      });
+    }
+
+    // Si es Colaborador, devuelve los tickets creados por él
+    return await this.ticketsRepository.find({
+      where: { user: { id: user.id } },
+      relations: ['user', 'assignedTo'],
+    });
   }
 
   findOne(id: number) {
