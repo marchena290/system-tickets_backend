@@ -1,6 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { User } from './entities/user.entity';
+import { GetUser } from './auth/decorators/get-user.decorator';
 
 @Controller()
 export class AppController {
@@ -13,7 +15,15 @@ export class AppController {
 
   @Get('protected')
   @UseGuards(JwtAuthGuard)
-  getProtected(): string {
-    return '🔒 Esta ruta está protegida. ¡Tu token es válido!';
+  getProtected(@GetUser() user: User) {
+    return {
+      message: '🔒 Esta ruta está protegida. ¡Tu token es válido!',
+      user: {
+        id: user.id,
+        email: user.email,
+        nombreCompleto: user.nombreCompleto,
+        rol: user.rol.name,
+      },
+    };
   }
 }
