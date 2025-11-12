@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,8 +57,39 @@ export class TicketsService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ticket`;
+  async findOne(id: number, user: User): Promise<Tickets> {
+    // 1. Buscar el ticket por ID con sus relaciones
+    const ticket = await this.ticketsRepository.findOne({
+      where: { id },
+      relations: ['user', 'assignedTo'],
+    });
+
+    // 2. Verificar si el ticket existe
+    if (!ticket) {
+      throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
+    }
+
+    // 3. SUPERVISOR puede ver cualquier ticket
+    if (user.rol.name === UserRol.SUPERVISOR) {
+      return ticket;
+    }
+
+    // 4. SOPORTISTA puede ver tickets asignados a él
+    if (user.rol.name === UserRol.SOPORTISTA) {
+      if (ticket.assignedTo && ticket.assignedTo.id === user.id) {
+        return ticket;
+      }
+      throw new ForbiddenException('No tienes permiso para ver este ticket');
+    }
+
+    // 5. COLABORADOR puede ver tickets que él creó
+    if (user.rol.name === UserRol.COLABORADOR) {
+      if (ticket.user.id === user.id) {
+        return ticket;
+      }
+    }
+
+    throw new ForbiddenException('No tienes permiso para ver este ticket');
   }
 
   update(id: number, updateTicketDto: UpdateTicketDto) {

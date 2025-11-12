@@ -32,8 +32,9 @@ export class TicketsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ticketsService.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  findOne(@Param('id') id: string, @GetUser() user: User) {
+    return this.ticketsService.findOne(+id, user);
   }
 
   @Patch(':id')
