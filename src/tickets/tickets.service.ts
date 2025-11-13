@@ -92,11 +92,50 @@ export class TicketsService {
     throw new ForbiddenException('No tienes permiso para ver este ticket');
   }
 
-  update(id: number, updateTicketDto: UpdateTicketDto) {
-    return `This action updates a #${id} ticket`;
+  async update(
+    id: number,
+    updateTicketDto: UpdateTicketDto,
+    user: User,
+  ): Promise<Tickets> {
+    // 1. Buscar ticket (validar que existe y permisos básicos)
+    const ticket = await this.findOne(id, user);
+
+    // 2. validar qué pueda actualizar segun el rol
+    if (user.rol.name === UserRol.SUPERVISOR) {
+      // El SUPERVISOR puede actualizar cualquier campo
+      if (updateTicketDto.asunto) ticket.title = updateTicketDto.asunto;
+      if (updateTicketDto.descripcion)
+        ticket.description = updateTicketDto.descripcion;
+      if (updateTicketDto.tipo) ticket.type = updateTicketDto.tipo;
+      if (updateTicketDto.categoria)
+        ticket.category = updateTicketDto.categoria;
+
+      // 3. SOPORTISTA puede editar descripción de tickets asignados a él
+    } else if (user.rol.name === UserRol.SOPORTISTA) {
+      if (updateTicketDto.descripcion)
+        ticket.description = updateTicketDto.descripcion;
+
+      // 4. COLABORADOR puede editar solo asunto y descripción de SUS tickets
+    } else if (user.rol.name === UserRol.COLABORADOR) {
+      if (updateTicketDto.asunto) ticket.title = updateTicketDto.asunto;
+      if (updateTicketDto.descripcion)
+        ticket.description = updateTicketDto.descripcion;
+    }
+
+    return await this.ticketsRepository.save(ticket);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} ticket`;
+  async remove(id: number, user: User): Promise<{ message: string }> {
+    const ticket = await this.findOne(id, user);
+
+    if (user.rol.name !== UserRol.SUPERVISOR) {
+      throw new ForbiddenException(
+        'No tienes permiso para eliminar este ticket',
+      );
+    }
+
+    await this.ticketsRepository.remove(ticket);
+
+    return { message: `Ticket con ID ${id} eliminado exitosamente` };
   }
 }

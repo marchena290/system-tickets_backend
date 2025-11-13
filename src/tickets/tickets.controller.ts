@@ -38,12 +38,18 @@ export class TicketsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTicketDto: UpdateTicketDto) {
-    return this.ticketsService.update(+id, updateTicketDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateTicketDto: UpdateTicketDto,
+    @GetUser() user: User,
+  ) {
+    return this.ticketsService.update(+id, updateTicketDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketsService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string, @GetUser() user: User) {
+    return this.ticketsService.remove(+id, user);
   }
 }

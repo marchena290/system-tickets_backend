@@ -29,12 +29,12 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    const rolColaborador = await this.rolRepository.findOne({
-      where: { name: UserRol.COLABORADOR },
+    const rol = await this.rolRepository.findOne({
+      where: { name: registerDto.rol as UserRol },
     });
 
-    if (!rolColaborador) {
-      throw new BadRequestException('Rol COLABORADOR no encontrado');
+    if (!rol) {
+      throw new BadRequestException(`Rol ${registerDto.rol} no encontrado`);
     }
 
     const newUser = this.userRepository.create({
@@ -44,7 +44,7 @@ export class AuthService {
       cedula: registerDto.cedula,
       departamento: registerDto.departamento,
       contacto: registerDto.contacto,
-      rol: rolColaborador,
+      rol: rol,
     });
 
     const savedUser = await this.userRepository.save(newUser);

@@ -1,52 +1,37 @@
-# Sistema de Gestión de Tickets 🎫<p align="center">
+# Sistema de Gestión de Tickets 🎫
 
+<p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
 
-Sistema de soporte técnico para gestión de tickets con roles diferenciados (Colaborador, Soportista, Supervisor).</p>
+Sistema de soporte técnico para gestión de tickets con roles diferenciados (Colaborador, Soportista, Supervisor).
 
-
-
-## 📋 Descripción[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 📋 Descripción
 
 Sistema desarrollado para una empresa de soporte de software y hardware ubicada en Centro América y el Caribe, con 5000 colaboradores y un departamento de TI centralizado en Costa Rica.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+## 🚀 Tecnologías
 
-## 🚀 Tecnologías    <p align="center">
+- **Backend:** NestJS
+- **Base de datos:** PostgreSQL
+- **ORM:** TypeORM
+- **Lenguaje:** TypeScript
+- **Autenticación:** JWT
 
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+## ✨ Características
 
-- **Backend:** NestJS<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+### Roles del Sistema
 
-- **Base de datos:** PostgreSQL<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-
-- **ORM:** TypeORM<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-
-- **Lenguaje:** TypeScript<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-
-## ✨ Características<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-
-### Roles del Sistema    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-
-- **Colaborador:** Puede crear tickets y ver el estado de sus casos  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-
-- **Soportista:** Atiende tickets, asigna prioridades y da seguimiento</p>
-
-- **Supervisor:** Administra usuarios, roles y asigna tickets a soportistas  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Colaborador:** Puede crear tickets y ver el estado de sus casos
+- **Soportista:** Atiende tickets, asigna prioridades y da seguimiento
+- **Supervisor:** Administra usuarios, roles y asigna tickets a soportistas
 
 ### Funcionalidades Implementadas
 
-- ✅ Sistema de roles## Description
-
+- ✅ Sistema de autenticación JWT
+- ✅ Sistema de roles y permisos
 - ✅ Gestión de usuarios
+- ✅ CRUD completo de tickets
 
 - ✅ Sistema de tickets con tipos (Redes, Software, Hardware)[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
