@@ -29,155 +29,109 @@ Sistema desarrollado para una empresa de soporte de software y hardware ubicada 
 ### Funcionalidades Implementadas
 
 - ✅ Sistema de autenticación JWT
-- ✅ Sistema de roles y permisos
-- ✅ Gestión de usuarios
-- ✅ CRUD completo de tickets
-
-- ✅ Sistema de tickets con tipos (Redes, Software, Hardware)[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
+- ✅ Sistema de roles y permisos (COLABORADOR, SOPORTISTA, SUPERVISOR)
+- ✅ Gestión de usuarios con seeder automático
+- ✅ CRUD completo de tickets con permisos por rol
+- ✅ Sistema de tickets con tipos (Redes, Software, Hardware)
 - ✅ Estados de tickets (Abierto, En revisión, En progreso, Finalizado)
+- ✅ Categorías de prioridad (Baja, Media, Alta)
+- ✅ Sistema de seguimiento (Tracking) con historial inmutable
+- ✅ Validaciones completas con class-validator
 
-- ✅ Categorías de prioridad (Baja, Media, Alta)## Project setup
+### En Desarrollo
 
-- ✅ Sistema de seguimiento de tickets
+- ⏳ Módulo de reportería y estadísticas
 
-- ✅ Seeder automático de roles```bash
+## 📦 Instalación
 
-$ npm install
-
-### En Desarrollo```
-
-- ⏳ Autenticación con JWT
-
-- ⏳ Guards por rol## Compile and run the project
-
-- ⏳ Reportería
-
-- ⏳ Notificaciones```bash
-
-# development
-
-## 📦 Instalación$ npm run start
-
-
-
-1. **Clonar el repositorio**# watch mode
-
-   ```bash$ npm run start:dev
-
-   git clone <url-del-repositorio>
-
-   cd system-tickets# production mode
-
-   ```$ npm run start:prod
-
-```
-
-2. **Instalar dependencias**
-
-   ```bash## Run tests
-
-   npm install
-
-   ``````bash
-
-# unit tests
-
-3. **Configurar variables de entorno**$ npm run test
-
+1. **Clonar el repositorio**
    ```bash
-
-   cp .env.example .env# e2e tests
-
-   ```$ npm run test:e2e
-
-   Editar `.env` con tus credenciales de PostgreSQL
-
-# test coverage
-
-4. **Crear la base de datos**$ npm run test:cov
-
-   ```sql```
-
-   CREATE DATABASE system_tickets;
-
-   ```## Deployment
-
-
-
-5. **Ejecutar la aplicación**When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-   ```bash
-
-   npm run start:devIf you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+   git clone https://github.com/marchena290/system-tickets_backend.git
+   cd system-tickets
    ```
 
-```bash
+2. **Instalar dependencias**
+   ```bash
+   npm install
+   ```
 
-   La aplicación estará disponible en `http://localhost:3000`$ npm install -g @nestjs/mau
+3. **Configurar variables de entorno**
+   ```bash
+   cp .env.example .env
+   ```
+   Editar `.env` con tus credenciales de PostgreSQL
 
-$ mau deploy
+4. **Crear la base de datos**
+   ```sql
 
-## 📊 Estructura de la Base de Datos```
+   CREATE DATABASE system_tickets;
+   ```
 
+5. **Ejecutar la aplicación**
+   ```bash
+   npm run start:dev
+   ```
+   La aplicación estará disponible en `http://localhost:3000`
 
+## 📊 Estructura de la Base de Datos
 
-### EntidadesWith Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Entidades
 
 - **User:** Usuarios del sistema (email, nombreCompleto, cedula, departamento, contacto)
-
-- **Rol:** Roles del sistema (Colaborador, Soportista, Supervisor)## Resources
-
+- **Rol:** Roles del sistema (Colaborador, Soportista, Supervisor)
 - **Tickets:** Casos de soporte con tipos, estados y prioridades
+- **Tracking:** Seguimiento y actualizaciones de tickets
 
-- **Tracking:** Seguimiento y actualizaciones de ticketsCheck out a few resources that may come in handy when working with NestJS:
+## 🗂️ Estructura del Proyecto
 
-
-
-## 🗂️ Estructura del Proyecto- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-
-```- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-
-src/- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-
-├── entities/           # Entidades de TypeORM- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-
-│   ├── user.entity.ts- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-
-│   ├── rol.entity.ts- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-
-│   ├── ticket.entity.ts- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
+```
+src/
+├── entities/           # Entidades de TypeORM
+│   ├── user.entity.ts
+│   ├── rol.entity.ts
+│   ├── ticket.entity.ts
 │   └── tracking.entity.ts
-
-├── auth/              # Módulo de autenticación## Support
-
+├── auth/              # Módulo de autenticación
 │   ├── auth.module.ts
-
-│   ├── auth.service.tsNest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
+│   ├── auth.service.ts
 │   ├── auth.controller.ts
-
-│   └── seed.service.ts## Stay in touch
-
+│   ├── jwt.strategy.ts
+│   ├── guards/        # Guards JWT
+│   ├── decorators/    # Decorador GetUser
+│   └── seed.service.ts
 ├── tickets/           # Módulo de tickets
+│   ├── tickets.module.ts
+│   ├── tickets.service.ts
+│   ├── tickets.controller.ts
+│   └── dto/
+├── tracking/          # Módulo de seguimiento
+│   ├── tracking.module.ts
+│   ├── tracking.service.ts
+│   ├── tracking.controller.ts
+│   └── dto/
+└── main.ts           # Punto de entrada
+```
 
-├── tracking/          # Módulo de seguimiento- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+## 🔗 Endpoints API
 
-└── main.ts           # Punto de entrada- Website - [https://nestjs.com](https://nestjs.com/)
+### Autenticación
+- `POST /auth/register` - Registrar nuevo usuario
+- `POST /auth/login` - Iniciar sesión (retorna JWT)
 
-```- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Tickets
+- `POST /tickets` - Crear ticket (requiere JWT)
+- `GET /tickets` - Listar tickets (filtrado por rol)
+- `GET /tickets/:id` - Ver detalles de ticket
+- `PATCH /tickets/:id` - Actualizar ticket
+- `DELETE /tickets/:id` - Eliminar ticket (solo SUPERVISOR)
 
+### Tracking
+- `POST /tracking` - Crear seguimiento (requiere JWT)
+- `GET /tracking/ticket/:ticketId` - Ver seguimientos de un ticket
 
+## 🛠️ Scripts Disponibles
 
-## 🛠️ Scripts Disponibles## License
-
-
-
-```bashNest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
 
 # Desarrollo
 npm run start:dev
@@ -200,27 +154,37 @@ npm run lint
 - [x] Configuración de TypeORM y PostgreSQL
 - [x] Creación de entidades y relaciones
 - [x] Sistema de seeding para datos iniciales
-- [x] Estructura de módulos (Auth, Tickets, Tracking)
+- [x] Estructura de módulos (Auth, Tickets, Tracking, Reports)
 
-### Fase 2: Autenticación ⏳ (En desarrollo)
-- [ ] Implementación de registro y login
-- [ ] JWT Strategy y Guards
-- [ ] Protección de rutas por rol
+### Fase 2: Autenticación ✅ (Completado - 11 Nov 2025)
+- [x] Implementación de registro y login
+- [x] JWT Strategy y Guards
+- [x] Protección de rutas por rol
+- [x] Decorador personalizado GetUser
 
-### Fase 3: CRUD y Lógica de Negocio
-- [ ] CRUD completo de tickets
-- [ ] Sistema de asignación de tickets
-- [ ] Seguimiento y actualización de tickets
-- [ ] Validaciones y manejo de errores
+### Fase 3: CRUD y Lógica de Negocio ✅ (Completado - 13 Nov 2025)
+- [x] CRUD completo de tickets con permisos por rol
+- [x] Sistema de asignación de tickets
+- [x] Seguimiento y actualización de tickets (Tracking)
+- [x] Validaciones y manejo de errores
+- [x] Historial inmutable de seguimientos
 
-### Fase 4: Reportería y Extras
+### Fase 4: Reportería y Extras ⏳ (En desarrollo)
 - [ ] Reportes por estado, usuario, soportista
-- [ ] Upload de evidencias
-- [ ] Notificaciones
+- [ ] Estadísticas para SUPERVISOR
+- [ ] Upload de evidencias (opcional)
 
-### Fase 5: Frontend
+### Fase 5: Frontend (Pendiente)
 - [ ] Aplicación Angular
 - [ ] Integración con API
+
+## 👥 Usuarios de Prueba
+
+El sistema incluye usuarios de prueba (generados por seeder):
+
+- **Colaborador:** juan.perez@empresa.com / 123456
+- **Soportista:** carlos.lopez@empresa.com / 123456
+- **Supervisor:** supervisor@empresa.com / 123456
 
 ## 👥 Autor
 
