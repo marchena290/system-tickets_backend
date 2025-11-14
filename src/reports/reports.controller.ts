@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { User } from 'src/entities/user.entity';
 import { ReportsService } from './reports.service';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
+import { UserRol } from 'src/entities/rol.entity';
+import { Controller, ForbiddenException, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  @Post()
-  create(@Body() createReportDto: CreateReportDto) {
-    return this.reportsService.create(createReportDto);
+  // Método privado para validar SUPERVISOR
+  private validarSupervisor(user: User) {
+    if (user.rol.name !== UserRol.SUPERVISOR) {
+      throw new ForbiddenException('Solo SUPERVISOR puede ver reportes');
+    }
   }
 
-  @Get()
-  findAll() {
-    return this.reportsService.findAll();
+  @Get('tickets-by-status')
+  @UseGuards(JwtAuthGuard)
+  async ticketsByStatus(@GetUser() user: User) {
+    this.validarSupervisor(user);
+    return await this.reportsService.ticketsByStatus();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reportsService.findOne(+id);
+  @Get('tickets-by-soportista')
+  @UseGuards(JwtAuthGuard)
+  async ticketsBySoportista(@GetUser() user: User) {
+    this.validarSupervisor(user);
+    return await this.reportsService.ticketsBySoportista();
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReportDto: UpdateReportDto) {
-    return this.reportsService.update(+id, updateReportDto);
+  @Get('tickets-by-user')
+  @UseGuards(JwtAuthGuard)
+  async ticketsByUser(@GetUser() user: User) {
+    this.validarSupervisor(user);
+    return await this.reportsService.ticketsByUser();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reportsService.remove(+id);
+  @Get('summary')
+  @UseGuards(JwtAuthGuard)
+  async summary(@GetUser() user: User) {
+    this.validarSupervisor(user);
+    return await this.reportsService.summary();
   }
 }

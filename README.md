@@ -38,9 +38,9 @@ Sistema desarrollado para una empresa de soporte de software y hardware ubicada 
 - ✅ Sistema de seguimiento (Tracking) con historial inmutable
 - ✅ Validaciones completas con class-validator
 
-### En Desarrollo
+### Reportería
 
-- ⏳ Módulo de reportería y estadísticas
+- ✅ Módulo de reportería y estadísticas (tickets por estado, usuario, soportista, resumen)
 
 ## 📦 Instalación
 
@@ -129,6 +129,12 @@ src/
 - `POST /tracking` - Crear seguimiento (requiere JWT)
 - `GET /tracking/ticket/:ticketId` - Ver seguimientos de un ticket
 
+### Reportes (solo SUPERVISOR)
+- `GET /reports/tickets-by-status` - Tickets agrupados por estado
+- `GET /reports/tickets-by-user` - Tickets agrupados por usuario
+- `GET /reports/tickets-by-soportista` - Tickets agrupados por soportista
+- `GET /reports/summary` - Resumen general de tickets
+
 ## 🛠️ Scripts Disponibles
 
 ```bash
@@ -169,9 +175,10 @@ npm run lint
 - [x] Validaciones y manejo de errores
 - [x] Historial inmutable de seguimientos
 
-### Fase 4: Reportería y Extras ⏳ (En desarrollo)
-- [ ] Reportes por estado, usuario, soportista
-- [ ] Estadísticas para SUPERVISOR
+
+### Fase 4: Reportería y Extras ✅ (Completado - 14 Nov 2025)
+- [x] Reportes por estado, usuario, soportista
+- [x] Estadísticas para SUPERVISOR
 - [ ] Upload de evidencias (opcional)
 
 ### Fase 5: Frontend (Pendiente)
@@ -193,6 +200,10 @@ Proyecto final - Sistema de Gestión de Tickets
 ## 📅 Fecha de Entrega
 
 4 de Diciembre de 2025
+
+## 🛡️ Notas de Seguridad y Limpieza
+
+El proyecto fue limpiado de dependencias innecesarias y vulnerabilidades críticas/altas usando `npm audit fix --force`. Solo quedan advertencias moderadas en dependencias de testing, que no afectan la operación ni la seguridad del backend.
 
 ## 📄 Licencia
 

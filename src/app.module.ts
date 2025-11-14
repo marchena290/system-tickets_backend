@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TrackingModule } from './tracking/tracking.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -29,6 +30,8 @@ import { TrackingModule } from './tracking/tracking.module';
     TicketsModule,
 
     TrackingModule,
+
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
