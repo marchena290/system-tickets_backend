@@ -48,6 +48,7 @@ export class AuthService {
     });
 
     const savedUser = await this.userRepository.save(newUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = savedUser;
     return result as User;
   }
@@ -78,6 +79,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new BadRequestException('Credenciales invalidas');
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = userExists;
     return {
       user: result as User,

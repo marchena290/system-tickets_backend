@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { SeedService } from './auth/seed.service';
 import { AuthModule } from './auth/auth.module';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
