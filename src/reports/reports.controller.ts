@@ -1,46 +1,36 @@
-import { User } from 'src/entities/user.entity';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ReportsService } from './reports.service';
-import { UserRol } from 'src/entities/rol.entity';
-import { Controller, ForbiddenException, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRol } from 'src/entities/rol.entity';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  // Método privado para validar SUPERVISOR
-  private validarSupervisor(user: User) {
-    if (user.rol.name !== UserRol.SUPERVISOR) {
-      throw new ForbiddenException('Solo SUPERVISOR puede ver reportes');
-    }
-  }
-
   @Get('tickets-by-status')
-  @UseGuards(JwtAuthGuard)
-  async ticketsByStatus(@GetUser() user: User) {
-    this.validarSupervisor(user);
-    return await this.reportsService.ticketsByStatus();
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsByStatus() {
+    return this.reportsService.ticketsByStatus();
   }
 
   @Get('tickets-by-soportista')
-  @UseGuards(JwtAuthGuard)
-  async ticketsBySoportista(@GetUser() user: User) {
-    this.validarSupervisor(user);
-    return await this.reportsService.ticketsBySoportista();
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsBySoportista() {
+    return this.reportsService.ticketsBySoportista();
   }
 
   @Get('tickets-by-user')
-  @UseGuards(JwtAuthGuard)
-  async ticketsByUser(@GetUser() user: User) {
-    this.validarSupervisor(user);
-    return await this.reportsService.ticketsByUser();
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsByUser() {
+    return this.reportsService.ticketsByUser();
   }
 
   @Get('summary')
-  @UseGuards(JwtAuthGuard)
-  async summary(@GetUser() user: User) {
-    this.validarSupervisor(user);
-    return await this.reportsService.summary();
+  @Roles(UserRol.SUPERVISOR)
+  async summary() {
+    return this.reportsService.summary();
   }
 }

@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { ReportsModule } from './reports/reports.module';
@@ -32,6 +33,8 @@ import { ReportsModule } from './reports/reports.module';
     TrackingModule,
 
     ReportsModule,
+    // Users module for CRUD operations on users
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

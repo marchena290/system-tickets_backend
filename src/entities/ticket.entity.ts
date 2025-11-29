@@ -19,7 +19,7 @@ export enum TicketType {
 
 export enum TicketStatus {
   ABIERTO = 'ABIERTO',
-  EN_REVISION = 'EN_REVISIÓN',
+  EN_REVISION = 'EN_REVISION',
   EN_PROGRESO = 'EN_PROGRESO',
   FINALIZADO = 'FINALIZADO',
 }
