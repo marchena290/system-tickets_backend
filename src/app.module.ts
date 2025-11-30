@@ -8,6 +8,8 @@ import { UsersModule } from './users/users.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { ReportsModule } from './reports/reports.module';
+import { join } from 'path/win32';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -24,6 +26,11 @@ import { ReportsModule } from './reports/reports.module';
       database: process.env.DB_TICKETS,
       autoLoadEntities: true,
       synchronize: true,
+    }),
+    // Servir archivos estáticos desde /uploads
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
     }),
 
     AuthModule,

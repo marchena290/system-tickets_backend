@@ -11,9 +11,11 @@ import { Repository } from 'typeorm';
 import { Tickets, TicketStatus } from 'src/entities/ticket.entity';
 import { User } from 'src/entities/user.entity';
 import { UserRol } from 'src/entities/rol.entity';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class TicketsService {
+  logger = new Logger('TicketsService');
   constructor(
     @InjectRepository(Tickets)
     private readonly ticketsRepository: Repository<Tickets>,
@@ -362,5 +364,51 @@ export class TicketsService {
     const saved = await this.ticketsRepository.save(ticket);
 
     return saved;
+  }
+
+  async saveEvidence(ticketId: number, urls: string[], user: User) {
+    const ticket = await this.ticketsRepository.findOne({
+      where: { id: ticketId },
+      relations: ['user', 'assignedTo'],
+    });
+    if (!ticket)
+      throw new NotFoundException(`Ticket con ID ${ticketId} no encontrado`);
+
+    // Permisos: creador, asignado o supervisor
+    const isCreator = ticket.user && ticket.user.id === user.id;
+    const isAssigned = ticket.assignedTo && ticket.assignedTo.id === user.id;
+    const isSupervisor = user?.rol?.name === UserRol.SUPERVISOR;
+    if (!isCreator && !isAssigned && !isSupervisor) {
+      throw new ForbiddenException(
+        'No autorizado para añadir evidencias a este ticket',
+      );
+    }
+
+    // Normalizar campo existente a array
+    let evidencias: string[] = [];
+    if (ticket.evidenciaUrl) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const parsed = JSON.parse(String(ticket.evidenciaUrl));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        if (Array.isArray(parsed)) evidencias = parsed;
+        else evidencias = [String(parsed)];
+      } catch {
+        evidencias = [String(ticket.evidenciaUrl)];
+      }
+    }
+
+    evidencias.push(...urls);
+
+    // Guardar siempre como JSON-string (compatible con columna text/string)
+    ticket.evidenciaUrl = JSON.stringify(evidencias);
+
+    await this.ticketsRepository.save(ticket);
+
+    // <-- Aquí es donde añades el log y el return
+    this.logger.log(
+      `Evidences saved for ticket ${ticketId}: ${evidencias.length} file(s)`,
+    );
+    return { success: true, urls: evidencias };
   }
 }
