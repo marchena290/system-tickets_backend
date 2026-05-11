@@ -32,7 +32,6 @@ export enum TicketCategory {
 
 @Entity('tickets')
 export class Tickets {
-  // Define columns and relations here
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -51,23 +50,36 @@ export class Tickets {
   @Column({ type: 'enum', enum: TicketCategory, nullable: true })
   category: TicketCategory;
 
+  @Column({
+    type: 'timestamp without time zone',
+    nullable: true,
+    name: 'deadline_at',
+  })
+  deadlineAt: Date | null;
+
   @Column({ nullable: true })
   evidenciaUrl: string;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
 
-  @UpdateDateColumn({ name: 'ultima_actualizacion' })
-  ultimaActualizacion: Date;
+  @UpdateDateColumn({ name: 'ultima_actualizacion', nullable: true })
+  ultimaActualizacion: Date | null;
 
   @ManyToOne(() => User, (user) => user.createTickets)
   @JoinColumn({ name: 'creator_id' })
   user: User;
 
-  @ManyToOne(() => User, (user) => user.tickets, { nullable: true })
+  @ManyToOne(() => User, (user) => user.ticketsAsignados, { nullable: true })
   @JoinColumn({ name: 'assigned_id' })
-  assignedTo: User;
+  assignedTo: User | null;
 
   @OneToMany(() => Tracking, (tracking) => tracking.ticket)
   trackings: Tracking[];
+
+  @Column({ type: 'varchar', nullable: true, name: 'requester_email' })
+  requesterEmail: string;
+
+  @Column({ type: 'varchar', nullable: true, name: 'requester_name' })
+  requesterName: string;
 }

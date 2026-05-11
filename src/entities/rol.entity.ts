@@ -5,6 +5,7 @@ export enum UserRol {
   COLABORADOR = 'COLABORADOR',
   SOPORTISTA = 'SOPORTISTA',
   SUPERVISOR = 'SUPERVISOR',
+  CLIENTE = 'CLIENTE',
 }
 
 @Entity('rol')

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Rol, UserRol } from 'src/entities/rol.entity';
@@ -70,6 +74,13 @@ export class AuthService {
     });
     if (!userExists) {
       throw new BadRequestException('Credenciales invalidas');
+    }
+
+    // bloquear usuarios inactivos
+    if (userExists.isActive === false) {
+      throw new UnauthorizedException(
+        'Usuario desactivado. Contacta al administrador',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(

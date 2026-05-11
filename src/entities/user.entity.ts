@@ -21,10 +21,10 @@ export class User {
   @Column()
   nombreCompleto: string;
 
-  @Column()
+  @Column({ length: 255, unique: true, nullable: false })
   cedula: string;
 
-  @Column()
+  @Column({ nullable: false })
   departamento: string;
 
   @Column()
@@ -41,7 +41,7 @@ export class User {
   rol: Rol;
 
   @OneToMany(() => Tickets, (ticket) => ticket.assignedTo)
-  tickets: Tickets[];
+  ticketsAsignados: Tickets[];
 
   @OneToMany(() => Tracking, (tracking) => tracking.usuario)
   tracking: Tracking[];

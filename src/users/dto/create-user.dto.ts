@@ -12,13 +12,13 @@ export class CreateUserDto {
   @IsString()
   nombreCompleto: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  cedula?: string;
+  cedula: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  departamento?: string;
+  departamento: string;
 
   @IsOptional()
   @IsString()

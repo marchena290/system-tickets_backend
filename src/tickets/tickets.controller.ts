@@ -34,11 +34,16 @@ export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    UserRol.SUPERVISOR,
+    UserRol.SOPORTISTA,
+    UserRol.CLIENTE,
+    UserRol.COLABORADOR,
+  )
   create(@Body() createTicketDto: CreateTicketDto, @GetUser() user: User) {
     return this.ticketsService.create(createTicketDto, user);
   }
-
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(@GetUser() user: User) {

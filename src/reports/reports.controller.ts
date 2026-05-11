@@ -1,36 +1,73 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ReportsService } from './reports.service';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { ReportsService, GroupedCountResult } from './reports.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRol } from 'src/entities/rol.entity';
+import { ReportQueryDto } from './dto/report-query.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  @Get('tickets-by-status')
-  @Roles(UserRol.SUPERVISOR)
-  async ticketsByStatus() {
-    return this.reportsService.ticketsByStatus();
+  @Get('tickets/total')
+  async total(): Promise<{ total: number }> {
+    const total = await this.reportsService.getTotalTickets();
+    return { total };
   }
 
-  @Get('tickets-by-soportista')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/summary/status')
   @Roles(UserRol.SUPERVISOR)
-  async ticketsBySoportista() {
-    return this.reportsService.ticketsBySoportista();
+  async summaryByStatus(
+    @Query() query: ReportQueryDto,
+  ): Promise<GroupedCountResult[]> {
+    return this.reportsService.getSummaryByStatus(query);
   }
 
-  @Get('tickets-by-user')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/summary/category')
   @Roles(UserRol.SUPERVISOR)
-  async ticketsByUser() {
+  async summaryByCategory(
+    @Query() query: ReportQueryDto,
+  ): Promise<GroupedCountResult[]> {
+    return this.reportsService.getSummaryByCategory(query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/by-status')
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsByStatus(
+    @Query() query: ReportQueryDto,
+  ): Promise<GroupedCountResult[]> {
+    return this.reportsService.getSummaryByStatus(query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/by-soportista')
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsBySoportista(@Query() query: ReportQueryDto): Promise<any[]> {
+    return this.reportsService.getLoadBySoportista(query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/by-user')
+  @Roles(UserRol.SUPERVISOR)
+  async ticketsByUser(): Promise<any[]> {
     return this.reportsService.ticketsByUser();
   }
 
-  @Get('summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/list')
   @Roles(UserRol.SUPERVISOR)
-  async summary() {
+  async list(@Query() query: ReportQueryDto): Promise<any[]> {
+    return this.reportsService.listTickets(query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('tickets/summary')
+  @Roles(UserRol.SUPERVISOR)
+  async summary(): Promise<any> {
     return this.reportsService.summary();
   }
 }

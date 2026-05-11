@@ -8,8 +8,10 @@ import { UsersModule } from './users/users.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { ReportsModule } from './reports/reports.module';
-import { join } from 'path/win32';
+import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -29,8 +31,11 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     }),
     // Servir archivos estáticos desde /uploads
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      // Usa process.cwd() para apuntar a la carpeta uploads del proyecto (no a dist/uploads)
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
+      // evita que rutas /api... sean interceptadas por el servidor de archivos estáticos
+      exclude: ['/api*'],
     }),
 
     AuthModule,
@@ -40,8 +45,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     TrackingModule,
 
     ReportsModule,
-    // Users module for CRUD operations on users
+
     UsersModule,
+
+    ReportsModule,
+    ScheduleModule.forRoot(),
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
