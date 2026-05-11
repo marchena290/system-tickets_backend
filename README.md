@@ -65,9 +65,6 @@ Sigue estos comandos en tu terminal para levantar el proyecto:
     ```bash
     npm run start:dev
 
-
-> 💡 **Nota:** El servidor corre en el puerto `4200` por defecto.
-
 ---
 
 ## 🗺️ Endpoints Principales
