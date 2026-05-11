@@ -1,155 +1,102 @@
-# Sistema de Gestion de Tickets
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
 
-Backend de soporte tecnico construido con NestJS para la administracion de tickets, seguimiento, reporteria, dashboard y control por roles.
+<h1 align="center">Sistema de Gestión de Tickets (HelpDesk API)</h1>
 
-Estado del proyecto: FINALIZADO
-Fecha de cierre funcional: 2025
+<p align="center">
+  <img src="https://img.shields.io/badge/Estado-FINALIZADO-success?style=for-the-badge" alt="Estado">
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs" alt="NestJS">
+  <img src="https://img.shields.io/badge/PostgreSQL-v14-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/TypeScript-v5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TS">
+</p>
 
-## Resumen
+## 📝 Descripción
 
-El sistema cubre el flujo completo de mesa de ayuda:
+Backend robusto para soporte técnico construido con **NestJS**. Esta API REST proporciona una solución integral para la administración de tickets, seguimiento inmutable, reportería avanzada y control de acceso basado en roles (RBAC).
 
-- Autenticacion y autorizacion con JWT
-- Roles: COLABORADOR, SOPORTISTA, SUPERVISOR
-- CRUD de tickets con reglas por rol
-- Historial de tracking inmutable por ticket
-- Reportes filtrables por fecha/estado/categoria
-- Dashboard de metricas
-- Envio de reporte por correo
-- Servido de archivos estaticos desde /uploads
+---
 
-## Stack Tecnico
+## 🛠️ Stack Técnico
 
-- NestJS 11
-- TypeScript
-- PostgreSQL
-- TypeORM
-- JWT + Passport
-- class-validator
-- Nodemailer
+| Tecnología | Logo | Descripción |
+| :--- | :---: | :--- |
+| **NestJS** | <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/nestjs/nestjs-original.svg" width="25"> | Framework progresivo de Node.js. |
+| **PostgreSQL** | <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original.svg" width="25"> | Base de datos relacional. |
+| **TypeORM** | <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/sequelize/sequelize-original.svg" width="25"> | ORM para la gestión de datos. |
+| **JWT** | <img src="https://img.shields.io/badge/JWT-black?style=flat-square&logo=json-web-tokens" width="50"> | Seguridad y autenticación. |
 
-## Modulos Principales
+---
 
-- auth
-- users
-- tickets
-- tracking
-- reports
-- dashboard
-- email
+## 🚀 Características Principales
 
-## Requisitos
+✅ **Seguridad:** Autenticación y autorización mediante **JWT**.
+👥 **Gestión de Roles:** Roles: `COLABORADOR`, `SOPORTISTA`, y `SUPERVISOR`.
+🎫 **Ciclo de Tickets:** CRUD con reglas de negocio por rol.
+🕵️‍♂️ **Auditoría:** Historial de *tracking* inmutable para cada ticket.
+📊 **Reportería:** Dashboard de métricas y reportes filtrables.
+📧 **Email:** Envío de reportes automatizados vía Nodemailer.
 
-- Node.js 20+
-- npm 10+
-- PostgreSQL 14+
+---
 
-## Configuracion Rapida
+## 📋 Requisitos Previos
 
-1. Clonar repositorio.
-2. Instalar dependencias con npm install.
-3. Copiar variables de entorno desde .env.example hacia .env.
-4. Crear la base de datos system_tickets en PostgreSQL.
-5. Ejecutar npm run start:dev.
+*   [Node.js](https://nodejs.org/) v20+
+*   [npm](https://www.npmjs.com/) v10+
+*   [PostgreSQL](https://www.postgresql.org/) v14+ activo
 
-Nota: el puerto por defecto del servidor es 4200 si PORT no esta definido.
+---
 
-## Variables de Entorno
+## ⚙️ Configuración Rápida
 
-Basadas en .env.example:
+Sigue estos comandos en tu terminal para levantar el proyecto:
 
-- DB_HOST
-- DB_PORT
-- DB_USER
-- DB_PASSWORD
-- DB_TICKETS
-- PORT
+1.  **Instalar dependencias:**
+    ```bash
+    npm install
+    ```
 
-## Scripts
+2.  **Configurar entorno:**
+    ```bash
+    cp .env.example .env
+    ```
 
-- npm run start:dev
-- npm run build
-- npm run start:prod
-- npm run test
-- npm run test:e2e
-- npm run lint
+3.  **Iniciar servidor (Desarrollo):**
+    ```bash
+    npm run start:dev
 
-## Endpoints Relevantes
 
-Autenticacion:
+> 💡 **Nota:** El servidor corre en el puerto `4200` por defecto.
 
-- POST /auth/register
-- POST /auth/login
+---
 
-Tickets:
+## 🗺️ Endpoints Principales
 
-- POST /tickets
-- GET /tickets
-- GET /tickets/:id
-- PATCH /tickets/:id
-- DELETE /tickets/:id
+### 🔑 Autenticación
+*   `POST /auth/register` | `POST /auth/login`
 
-Tracking:
+### 🎫 Tickets
+*   `POST /tickets` - Crear | `GET /tickets` - Listar | `PATCH /tickets/:id` - Actualizar
 
-- POST /tracking
-- GET /tracking/ticket/:ticketId
+### 📊 Reportes
+*   `GET /reports/summary/status` - Métricas por estado.
+*   `POST /dashboard/send-report` - Enviar reporte por email.
 
-Reportes:
+---
 
-- GET /reports/tickets/total
-- GET /reports/tickets/summary/status
-- GET /reports/tickets/summary/category
-- GET /reports/tickets/by-status
-- GET /reports/tickets/by-soportista
-- GET /reports/tickets/by-user
-- GET /reports/tickets/list
-- GET /reports/tickets/summary
+## 🛡️ Seguridad y Auditoría (GitHub)
 
-Dashboard:
+### ✅ Subir al Repo
+*   `src/`, `test/`, `package.json`, `.env.example`, `README.md`.
 
-- GET /dashboard/metrics
-- POST /dashboard/send-report
+### ❌ NO Subir (Ignorar)
+*   `.env`, `node_modules/`, `dist/`, `uploads/*`.
 
-## Auditoria GitHub
+> **Limpieza:** Si subiste archivos accidentales a `uploads/`, ejecuta:  
+> `git rm -r --cached uploads/`
 
-Esta seccion define que SI y que NO debe subirse a GitHub en este proyecto.
+---
 
-### Debe subirse
+## 📄 Licencia
 
-- Codigo fuente en src y test
-- Configuracion de proyecto (package.json, tsconfig, nest-cli, eslint)
-- .env.example (sin secretos)
-- Migraciones SQL
-- Coleccion Postman
-- README
-- .gitignore
-
-### No debe subirse
-
-- .env
-- node_modules
-- dist
-- uploads con imagenes o evidencias reales
-- Archivos de respaldo tipo .bak
-- Reportes locales como npm-audit.json
-- Logs temporales
-
-### Cambios aplicados para proteger el repositorio
-
-- Se actualizaron reglas en .gitignore para ignorar uploads/* y conservar solo uploads/.gitkeep.
-- Se agrego uploads/.gitkeep para mantener la carpeta sin versionar archivos adjuntos.
-- Se ignoran archivos .bak y npm-audit.json.
-
-### Limpieza recomendada antes de proximo push
-
-Si algun archivo ya quedo trackeado antes de estas reglas, hay que sacarlo del indice de Git con comandos de limpieza (sin borrar local), por ejemplo sobre uploads.
-
-## Seguridad
-
-- Nunca subir credenciales reales.
-- Rotar secretos si en algun momento se expusieron.
-- Mantener dependencias actualizadas y revisar npm audit de forma periodica.
-
-## Licencia
-
-Uso academico/privado.
+Uso académico / privado. 2025.
