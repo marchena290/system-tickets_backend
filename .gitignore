@@ -52,5 +52,13 @@ pids
 *.seed
 *.pid.lock
 
+# Uploads locales (mantener solo la carpeta en el repo)
+uploads/*
+!uploads/.gitkeep
+
+# Artefactos de respaldo/locales
+*.bak
+npm-audit.json
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

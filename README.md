@@ -1,210 +1,155 @@
-# Sistema de Gestión de Tickets 🎫
+# Sistema de Gestion de Tickets
 
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+Backend de soporte tecnico construido con NestJS para la administracion de tickets, seguimiento, reporteria, dashboard y control por roles.
 
-Sistema de soporte técnico para gestión de tickets con roles diferenciados (Colaborador, Soportista, Supervisor).
+Estado del proyecto: FINALIZADO
+Fecha de cierre funcional: 2025
 
-## 📋 Descripción
+## Resumen
 
-Sistema desarrollado para una empresa de soporte de software y hardware ubicada en Centro América y el Caribe, con 5000 colaboradores y un departamento de TI centralizado en Costa Rica.
+El sistema cubre el flujo completo de mesa de ayuda:
 
-## 🚀 Tecnologías
+- Autenticacion y autorizacion con JWT
+- Roles: COLABORADOR, SOPORTISTA, SUPERVISOR
+- CRUD de tickets con reglas por rol
+- Historial de tracking inmutable por ticket
+- Reportes filtrables por fecha/estado/categoria
+- Dashboard de metricas
+- Envio de reporte por correo
+- Servido de archivos estaticos desde /uploads
 
-- **Backend:** NestJS
-- **Base de datos:** PostgreSQL
-- **ORM:** TypeORM
-- **Lenguaje:** TypeScript
-- **Autenticación:** JWT
+## Stack Tecnico
 
-## ✨ Características
+- NestJS 11
+- TypeScript
+- PostgreSQL
+- TypeORM
+- JWT + Passport
+- class-validator
+- Nodemailer
 
-### Roles del Sistema
+## Modulos Principales
 
-- **Colaborador:** Puede crear tickets y ver el estado de sus casos
-- **Soportista:** Atiende tickets, asigna prioridades y da seguimiento
-- **Supervisor:** Administra usuarios, roles y asigna tickets a soportistas
+- auth
+- users
+- tickets
+- tracking
+- reports
+- dashboard
+- email
 
-### Funcionalidades Implementadas
+## Requisitos
 
-- ✅ Sistema de autenticación JWT
-- ✅ Sistema de roles y permisos (COLABORADOR, SOPORTISTA, SUPERVISOR)
-- ✅ Gestión de usuarios con seeder automático
-- ✅ CRUD completo de tickets con permisos por rol
-- ✅ Sistema de tickets con tipos (Redes, Software, Hardware)
-- ✅ Estados de tickets (Abierto, En revisión, En progreso, Finalizado)
-- ✅ Categorías de prioridad (Baja, Media, Alta)
-- ✅ Sistema de seguimiento (Tracking) con historial inmutable
-- ✅ Validaciones completas con class-validator
+- Node.js 20+
+- npm 10+
+- PostgreSQL 14+
 
-### Reportería
+## Configuracion Rapida
 
-- ✅ Módulo de reportería y estadísticas (tickets por estado, usuario, soportista, resumen)
+1. Clonar repositorio.
+2. Instalar dependencias con npm install.
+3. Copiar variables de entorno desde .env.example hacia .env.
+4. Crear la base de datos system_tickets en PostgreSQL.
+5. Ejecutar npm run start:dev.
 
-## 📦 Instalación
+Nota: el puerto por defecto del servidor es 4200 si PORT no esta definido.
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/marchena290/system-tickets_backend.git
-   cd system-tickets
-   ```
+## Variables de Entorno
 
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
+Basadas en .env.example:
 
-3. **Configurar variables de entorno**
-   ```bash
-   cp .env.example .env
-   ```
-   Editar `.env` con tus credenciales de PostgreSQL
+- DB_HOST
+- DB_PORT
+- DB_USER
+- DB_PASSWORD
+- DB_TICKETS
+- PORT
 
-4. **Crear la base de datos**
-   ```sql
+## Scripts
 
-   CREATE DATABASE system_tickets;
-   ```
+- npm run start:dev
+- npm run build
+- npm run start:prod
+- npm run test
+- npm run test:e2e
+- npm run lint
 
-5. **Ejecutar la aplicación**
-   ```bash
-   npm run start:dev
-   ```
-   La aplicación estará disponible en `http://localhost:3000`
+## Endpoints Relevantes
 
-## 📊 Estructura de la Base de Datos
+Autenticacion:
 
-### Entidades
+- POST /auth/register
+- POST /auth/login
 
-- **User:** Usuarios del sistema (email, nombreCompleto, cedula, departamento, contacto)
-- **Rol:** Roles del sistema (Colaborador, Soportista, Supervisor)
-- **Tickets:** Casos de soporte con tipos, estados y prioridades
-- **Tracking:** Seguimiento y actualizaciones de tickets
+Tickets:
 
-## 🗂️ Estructura del Proyecto
+- POST /tickets
+- GET /tickets
+- GET /tickets/:id
+- PATCH /tickets/:id
+- DELETE /tickets/:id
 
-```
-src/
-├── entities/           # Entidades de TypeORM
-│   ├── user.entity.ts
-│   ├── rol.entity.ts
-│   ├── ticket.entity.ts
-│   └── tracking.entity.ts
-├── auth/              # Módulo de autenticación
-│   ├── auth.module.ts
-│   ├── auth.service.ts
-│   ├── auth.controller.ts
-│   ├── jwt.strategy.ts
-│   ├── guards/        # Guards JWT
-│   ├── decorators/    # Decorador GetUser
-│   └── seed.service.ts
-├── tickets/           # Módulo de tickets
-│   ├── tickets.module.ts
-│   ├── tickets.service.ts
-│   ├── tickets.controller.ts
-│   └── dto/
-├── tracking/          # Módulo de seguimiento
-│   ├── tracking.module.ts
-│   ├── tracking.service.ts
-│   ├── tracking.controller.ts
-│   └── dto/
-└── main.ts           # Punto de entrada
-```
+Tracking:
 
-## 🔗 Endpoints API
+- POST /tracking
+- GET /tracking/ticket/:ticketId
 
-### Autenticación
-- `POST /auth/register` - Registrar nuevo usuario
-- `POST /auth/login` - Iniciar sesión (retorna JWT)
+Reportes:
 
-### Tickets
-- `POST /tickets` - Crear ticket (requiere JWT)
-- `GET /tickets` - Listar tickets (filtrado por rol)
-- `GET /tickets/:id` - Ver detalles de ticket
-- `PATCH /tickets/:id` - Actualizar ticket
-- `DELETE /tickets/:id` - Eliminar ticket (solo SUPERVISOR)
+- GET /reports/tickets/total
+- GET /reports/tickets/summary/status
+- GET /reports/tickets/summary/category
+- GET /reports/tickets/by-status
+- GET /reports/tickets/by-soportista
+- GET /reports/tickets/by-user
+- GET /reports/tickets/list
+- GET /reports/tickets/summary
 
-### Tracking
-- `POST /tracking` - Crear seguimiento (requiere JWT)
-- `GET /tracking/ticket/:ticketId` - Ver seguimientos de un ticket
+Dashboard:
 
-### Reportes (solo SUPERVISOR)
-- `GET /reports/tickets-by-status` - Tickets agrupados por estado
-- `GET /reports/tickets-by-user` - Tickets agrupados por usuario
-- `GET /reports/tickets-by-soportista` - Tickets agrupados por soportista
-- `GET /reports/summary` - Resumen general de tickets
+- GET /dashboard/metrics
+- POST /dashboard/send-report
 
-## 🛠️ Scripts Disponibles
+## Auditoria GitHub
 
-```bash
+Esta seccion define que SI y que NO debe subirse a GitHub en este proyecto.
 
-# Desarrollo
-npm run start:dev
+### Debe subirse
 
-# Producción
-npm run build
-npm run start:prod
+- Codigo fuente en src y test
+- Configuracion de proyecto (package.json, tsconfig, nest-cli, eslint)
+- .env.example (sin secretos)
+- Migraciones SQL
+- Coleccion Postman
+- README
+- .gitignore
 
-# Tests
-npm run test
+### No debe subirse
 
-# Linting
-npm run lint
-```
+- .env
+- node_modules
+- dist
+- uploads con imagenes o evidencias reales
+- Archivos de respaldo tipo .bak
+- Reportes locales como npm-audit.json
+- Logs temporales
 
-## 📝 Progreso del Proyecto
+### Cambios aplicados para proteger el repositorio
 
-### Fase 1: Fundamentos ✅ (Completado - 8 Nov 2025)
-- [x] Configuración inicial del proyecto
-- [x] Configuración de TypeORM y PostgreSQL
-- [x] Creación de entidades y relaciones
-- [x] Sistema de seeding para datos iniciales
-- [x] Estructura de módulos (Auth, Tickets, Tracking, Reports)
+- Se actualizaron reglas en .gitignore para ignorar uploads/* y conservar solo uploads/.gitkeep.
+- Se agrego uploads/.gitkeep para mantener la carpeta sin versionar archivos adjuntos.
+- Se ignoran archivos .bak y npm-audit.json.
 
-### Fase 2: Autenticación ✅ (Completado - 11 Nov 2025)
-- [x] Implementación de registro y login
-- [x] JWT Strategy y Guards
-- [x] Protección de rutas por rol
-- [x] Decorador personalizado GetUser
+### Limpieza recomendada antes de proximo push
 
-### Fase 3: CRUD y Lógica de Negocio ✅ (Completado - 13 Nov 2025)
-- [x] CRUD completo de tickets con permisos por rol
-- [x] Sistema de asignación de tickets
-- [x] Seguimiento y actualización de tickets (Tracking)
-- [x] Validaciones y manejo de errores
-- [x] Historial inmutable de seguimientos
+Si algun archivo ya quedo trackeado antes de estas reglas, hay que sacarlo del indice de Git con comandos de limpieza (sin borrar local), por ejemplo sobre uploads.
 
+## Seguridad
 
-### Fase 4: Reportería y Extras ✅ (Completado - 14 Nov 2025)
-- [x] Reportes por estado, usuario, soportista
-- [x] Estadísticas para SUPERVISOR
-- [ ] Upload de evidencias (opcional)
+- Nunca subir credenciales reales.
+- Rotar secretos si en algun momento se expusieron.
+- Mantener dependencias actualizadas y revisar npm audit de forma periodica.
 
-### Fase 5: Frontend (Pendiente)
-- [ ] Aplicación Angular
-- [ ] Integración con API
+## Licencia
 
-## 👥 Usuarios de Prueba
-
-El sistema incluye usuarios de prueba (generados por seeder):
-
-- **Colaborador:** juan.perez@empresa.com / 123456
-- **Soportista:** carlos.lopez@empresa.com / 123456
-- **Supervisor:** supervisor@empresa.com / 123456
-
-## 👥 Autor
-
-Proyecto final - Sistema de Gestión de Tickets
-
-## 📅 Fecha de Entrega
-
-4 de Diciembre de 2025
-
-## 🛡️ Notas de Seguridad y Limpieza
-
-El proyecto fue limpiado de dependencias innecesarias y vulnerabilidades críticas/altas usando `npm audit fix --force`. Solo quedan advertencias moderadas en dependencias de testing, que no afectan la operación ni la seguridad del backend.
-
-## 📄 Licencia
-
-Este proyecto es privado y con fines académicos.
+Uso academico/privado.
