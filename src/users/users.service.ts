@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
@@ -13,6 +14,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +29,12 @@ export class UsersService {
 
     // ✅ Inyección del servicio de correo
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private getPasswordSaltRounds(): number {
+    return Number(this.configService.get<string>('BCRYPT_SALT_ROUNDS') || 12);
+  }
 
   // -------------------------------------------------------------
   // ✅ NUEVO MÉTODO PARA CREAR CLIENTES (Solicitantes externos)
@@ -47,8 +54,11 @@ export class UsersService {
     }
 
     // 3. Generar Contraseña Temporal y hash
-    const tempPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    const tempPassword = randomBytes(12).toString('hex');
+    const hashedPassword = await bcrypt.hash(
+      tempPassword,
+      this.getPasswordSaltRounds(),
+    );
 
     // 4. Obtener el Rol CLIENTE
     const clienteRol = await this.rolRepository.findOne({
@@ -112,7 +122,7 @@ export class UsersService {
       where: { name: dto.rol as UserRol },
     });
     if (!rol) throw new NotFoundException(`Rol ${dto.rol} not found`);
-    const hashed = await bcrypt.hash(dto.password, 10);
+    const hashed = await bcrypt.hash(dto.password, this.getPasswordSaltRounds());
 
     const newUser = this.userRepository.create({
       email: dto.email,
@@ -139,7 +149,10 @@ export class UsersService {
     if (!user) throw new NotFoundException(`User ${id} not found`);
 
     if (dto.password) {
-      user.password = await bcrypt.hash(dto.password, 10);
+      user.password = await bcrypt.hash(
+        dto.password,
+        this.getPasswordSaltRounds(),
+      );
     }
     if (dto.email) user.email = dto.email;
     if (dto.nombreCompleto) user.nombreCompleto = dto.nombreCompleto;
@@ -165,6 +178,12 @@ export class UsersService {
       throw new NotFoundException(`User ${id} not found`);
     }
 
+    if (user.rol?.name === UserRol.SUPERVISOR) {
+      throw new ForbiddenException(
+        'No se permite eliminar físicamente a un supervisor; use la desactivación lógica.',
+      );
+    }
+
     if (user.isActive) {
       this.logger.warn(`Intento de eliminar usuario activo: ${user.email}`);
       throw new ForbiddenException(
@@ -184,6 +203,21 @@ export class UsersService {
 
     if (user.id === actingUser.id) {
       throw new ForbiddenException('No puedes desactivarte a ti mismo');
+    }
+
+    if (user.rol?.name === UserRol.SUPERVISOR) {
+      const activeSupervisors = await this.userRepository.count({
+        where: {
+          isActive: true,
+          rol: { name: UserRol.SUPERVISOR },
+        },
+      });
+
+      if (activeSupervisors <= 1) {
+        throw new ForbiddenException(
+          'No se puede desactivar el último supervisor activo',
+        );
+      }
     }
 
     user.isActive = false;

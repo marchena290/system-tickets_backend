@@ -11,6 +11,8 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('tickets/total')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRol.SUPERVISOR)
   async total(): Promise<{ total: number }> {
     const total = await this.reportsService.getTotalTickets();
     return { total };

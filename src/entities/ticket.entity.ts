@@ -51,7 +51,7 @@ export class Tickets {
   category: TicketCategory;
 
   @Column({
-    type: 'timestamp without time zone',
+    type: 'timestamp with time zone',
     nullable: true,
     name: 'deadline_at',
   })
@@ -60,10 +60,14 @@ export class Tickets {
   @Column({ nullable: true })
   evidenciaUrl: string;
 
-  @CreateDateColumn({ name: 'fecha_creacion' })
+  @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp with time zone' })
   fechaCreacion: Date;
 
-  @UpdateDateColumn({ name: 'ultima_actualizacion', nullable: true })
+  @UpdateDateColumn({
+    name: 'ultima_actualizacion',
+    nullable: true,
+    type: 'timestamp with time zone',
+  })
   ultimaActualizacion: Date | null;
 
   @ManyToOne(() => User, (user) => user.createTickets)

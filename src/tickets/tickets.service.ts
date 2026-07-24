@@ -8,7 +8,7 @@ import {
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import {
   Tickets,
   TicketStatus,
@@ -22,6 +22,7 @@ import { Tracking } from 'src/entities/tracking.entity';
 import { CreateTrackingDto as CreateTrackingDtoTicket } from './dto/create-tracking.dto';
 import { UsersService } from 'src/users/users.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class TicketsService {
@@ -136,7 +137,7 @@ export class TicketsService {
         cedula: requesterData.cedula,
         departamento: requesterData.department,
         contacto: 'N/A',
-        password: Math.random().toString(36),
+        password: randomBytes(12).toString('hex'),
         rol: UserRol.CLIENTE,
       }; // Creamos/Recuperamos al cliente externo (Ricardo)
 
@@ -442,71 +443,26 @@ export class TicketsService {
       );
     }
 
-    let fkColumn = 'assignedToId';
     try {
-      const rel = this.ticketsRepository.metadata.relations.find(
-        (r) =>
-          r.propertyName === 'assignedTo' || r.propertyName === 'asignadoA',
+      const result = await this.ticketsRepository.update(
+        { id, assignedTo: IsNull() },
+        { assignedTo: user },
       );
-      if (rel && rel.joinColumns && rel.joinColumns.length > 0) {
-        fkColumn = rel.joinColumns[0].databaseName || fkColumn;
-      }
-    } catch {
-      // ignore
-    }
 
-    const table = this.ticketsRepository.metadata.tableName;
-
-    try {
-      const pgSql = `UPDATE "${table}" SET "${fkColumn}" = $1 WHERE id = $2 AND "${fkColumn}" IS NULL RETURNING id`;
-      try {
-        const rows: unknown = await this.ticketsRepository.query(pgSql, [
-          user.id,
-          id,
-        ]);
-        if (Array.isArray(rows) && (rows as unknown[]).length > 0) {
-          const updated = await this.ticketsRepository.findOne({
-            where: { id },
-            relations: ['user', 'assignedTo'],
-          });
-          if (!updated)
-            throw new NotFoundException(
-              `Ticket con ID ${id} no encontrado después de asignar`,
-            );
-          return updated;
+      if (result.affected && result.affected > 0) {
+        const updated = await this.ticketsRepository.findOne({
+          where: { id },
+          relations: ['user', 'assignedTo'],
+        });
+        if (!updated) {
+          throw new NotFoundException(
+            `Ticket con ID ${id} no encontrado después de asignar`,
+          );
         }
-        throw new BadRequestException('Ticket ya está asignado o no existe');
-      } catch {
-        // fallback below
+        return updated;
       }
 
-      const candidateCols = [
-        fkColumn,
-        'assignedToId',
-        'assigned_to',
-        'assigned_to_id',
-        'soportistaId',
-        'soportista_id',
-      ];
-      for (const col of candidateCols) {
-        try {
-          const updateSql = `UPDATE \`${table}\` SET \`${col}\` = ? WHERE id = ? AND \`${col}\` IS NULL`;
-          await this.ticketsRepository.query(updateSql, [user.id, id]);
-          const maybe = await this.ticketsRepository.findOne({
-            where: { id },
-            relations: ['user', 'assignedTo'],
-          });
-          if (maybe && maybe.assignedTo && maybe.assignedTo.id === user.id) {
-            return maybe;
-          }
-        } catch {
-          // try next
-        }
-      }
-
-      throw new BadRequestException(
-        'No se pudo reclamar el ticket (ya asignado o error en DB)',
-      );
+      throw new BadRequestException('Ticket ya está asignado o no existe');
     } catch (err) {
       this.logger.error('[TicketsService.claim] error:', err);
       throw err;

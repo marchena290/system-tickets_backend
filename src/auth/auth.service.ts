@@ -11,6 +11,7 @@ import { User } from 'src/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,12 @@ export class AuthService {
     @InjectRepository(Rol)
     private readonly rolRepository: Repository<Rol>,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private getPasswordSaltRounds(): number {
+    return Number(this.configService.get<string>('BCRYPT_SALT_ROUNDS') || 12);
+  }
 
   async register(registerDto: RegisterDto): Promise<User> {
     const emailExists = await this.userRepository.findOne({
@@ -31,7 +37,10 @@ export class AuthService {
       throw new BadRequestException('El email ya está en uso');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const hashedPassword = await bcrypt.hash(
+      registerDto.password,
+      this.getPasswordSaltRounds(),
+    );
 
     const rol = await this.rolRepository.findOne({
       where: { name: registerDto.rol as UserRol },
@@ -73,7 +82,7 @@ export class AuthService {
       relations: ['rol'],
     });
     if (!userExists) {
-      throw new BadRequestException('Credenciales invalidas');
+      throw new UnauthorizedException('Credenciales invalidas');
     }
 
     // bloquear usuarios inactivos
@@ -88,7 +97,7 @@ export class AuthService {
       userExists.password,
     );
     if (!isPasswordValid) {
-      throw new BadRequestException('Credenciales invalidas');
+      throw new UnauthorizedException('Credenciales invalidas');
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = userExists;
@@ -100,8 +109,7 @@ export class AuthService {
 
   private generateToken(user: User): string {
     const payload = {
-      id: user.id,
-      email: user.email,
+      sub: user.id,
       rol: user.rol.name,
     };
     return this.jwtService.sign(payload);

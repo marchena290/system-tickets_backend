@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,36 +8,59 @@ import { UsersModule } from './users/users.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { ReportsModule } from './reports/reports.module';
-import { join } from 'path';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      cache: true,
     }),
 
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_TICKETS,
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
-    // Servir archivos estáticos desde /uploads
-    ServeStaticModule.forRoot({
-      // Usa process.cwd() para apuntar a la carpeta uploads del proyecto (no a dist/uploads)
-      rootPath: join(process.cwd(), 'uploads'),
-      serveRoot: '/uploads',
-      // evita que rutas /api... sean interceptadas por el servidor de archivos estáticos
-      exclude: ['/api*'],
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'default',
+          ttl: 60_000,
+          limit: 120,
+        },
+      ],
     }),
 
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const dbUrl = configService.get<string>('DATABASE_URL');
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
+
+        // 1. Si existe DATABASE_URL (Tu caso local actual)
+        if (dbUrl) {
+          return {
+            type: 'postgres',
+            url: dbUrl,
+            autoLoadEntities: true,
+            synchronize: !isProduction, // true en local para crear tablas, false en prod
+            ssl: isProduction ? { rejectUnauthorized: false } : false,
+          };
+        }
+
+        // 2. Si usas variables individuales
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST', 'localhost'),
+          port: Number(configService.get<string>('DB_PORT', '5432')),
+          username: configService.get<string>('DB_USER', 'postgres'),
+          password: configService.get<string>('DB_PASSWORD', 'postgres'),
+          database: configService.get<string>('DB_TICKETS', 'tickets_db'),
+          autoLoadEntities: true,
+          synchronize: !isProduction,
+        };
+      },
+    }),
     AuthModule,
 
     TicketsModule,
@@ -53,6 +76,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
     DashboardModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

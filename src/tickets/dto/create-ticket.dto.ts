@@ -14,15 +14,19 @@ import { TicketCategory, TicketType } from 'src/entities/ticket.entity';
 
 // Requerido por el campo requester
 export class RequesterDto {
+  @IsNotEmpty()
   @IsString()
   name: string;
 
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 
+  @IsNotEmpty()
   @IsString()
   cedula: string;
 
+  @IsNotEmpty()
   @IsString()
   department: string;
 }

@@ -26,7 +26,7 @@ export class Tracking {
   UsuarioId: number;
 
   @Column({
-    type: 'timestamp without time zone',
+    type: 'timestamp with time zone',
     default: () => 'CURRENT_TIMESTAMP',
   })
   fecha_registro: Date;

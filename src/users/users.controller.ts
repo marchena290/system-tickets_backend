@@ -19,6 +19,8 @@ import { UserRol } from 'src/entities/rol.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/entities/user.entity';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRol.SUPERVISOR)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

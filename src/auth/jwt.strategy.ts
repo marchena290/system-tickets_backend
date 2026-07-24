@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -10,21 +11,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'tu-secreto-super-seguro',
+      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
-  async validate(payload: { id: number; email: string; rol: string }) {
+  async validate(payload: { sub: number; rol: string }) {
     const user = await this.userRepository.findOne({
-      where: { id: payload.id },
+      where: { id: payload.sub },
       relations: ['rol'],
     });
 
-    if (!user) {
+    if (!user || user.isActive === false) {
+      throw new UnauthorizedException('Token no válido');
+    }
+
+    if (user.rol?.name !== payload.rol) {
       throw new UnauthorizedException('Token no válido');
     }
 

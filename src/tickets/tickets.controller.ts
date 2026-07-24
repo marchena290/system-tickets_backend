@@ -14,6 +14,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
@@ -27,14 +28,19 @@ import * as fs from 'fs';
 import { extname, join } from 'path';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('tickets')
 export class TicketsController {
   logger = new Logger('TicketsController');
-  constructor(private readonly ticketsService: TicketsService) {}
+  constructor(
+    private readonly ticketsService: TicketsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Roles(
     UserRol.SUPERVISOR,
     UserRol.SOPORTISTA,
@@ -130,9 +136,13 @@ export class TicketsController {
     }
 
     const baseUrl =
-      process.env.APP_BASE_URL ||
+      this.configService.get<string>('APP_BASE_URL') ||
+      this.configService.get<string>('FRONTEND_ORIGIN') ||
       `http://localhost:${process.env.PORT || 4200}`;
-    const urls = (files || []).map((f) => `${baseUrl}/uploads/${f.filename}`);
+    const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
+    const urls = (files || []).map(
+      (f) => `${normalizedBaseUrl}/uploads/${f.filename}`,
+    );
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
