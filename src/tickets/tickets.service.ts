@@ -247,45 +247,43 @@ export class TicketsService {
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
     }
 
-    // Casteamos de forma segura para evitar advertencias de ESLint
-    const userRolName = user?.rol?.name as UserRol | undefined;
+    // Extraemos el rol asegurando compatibilidad con objetos o strings
+    const rawRol = typeof user.rol === 'object' ? user.rol?.name : user.rol;
+    const userRolName = String(rawRol || '')
+      .toUpperCase()
+      .trim();
 
     // 1. SUPERVISOR Y SOPORTISTA: Acceso total de lectura
-    if (
-      userRolName === UserRol.SUPERVISOR ||
-      userRolName === UserRol.SOPORTISTA
-    ) {
+    // Usamos strings directos en mayúsculas para evitar el conflicto con el Enum
+    if (userRolName === 'SUPERVISOR' || userRolName === 'SOPORTISTA') {
       return ticket;
     }
 
-    // 2. CLIENTE: Valida contra requesteremail
-    if (userRolName === UserRol.CLIENTE) {
-      if (
-        ticket.requesterEmail &&
-        user.email &&
-        ticket.requesterEmail.toLowerCase() === user.email.toLowerCase()
-      ) {
-        return ticket;
-      }
-      throw new ForbiddenException('No tienes permiso para ver este ticket');
-    }
+    // 2. Normalizar emails e IDs para validación de pertenencia
+    const userEmail = user.email ? user.email.toLowerCase().trim() : '';
+    const requesterEmail = ticket.requesterEmail
+      ? ticket.requesterEmail.toLowerCase().trim()
+      : '';
 
-    // 3. COLABORADOR: Comprobar creador de ticket o correo del solicitante
-    if (userRolName === UserRol.COLABORADOR) {
-      const creatorId = ticket.user?.id;
-      const isCreator = Boolean(
-        creatorId && Number(creatorId) === Number(user.id),
-      );
-      const isRequester = Boolean(
-        ticket.requesterEmail &&
-          user.email &&
-          ticket.requesterEmail.toLowerCase() === user.email.toLowerCase(),
-      );
+    const userId = Number(user.id);
+    const creatorId = ticket.user?.id ? Number(ticket.user.id) : null;
 
+    const isCreator = Boolean(creatorId && creatorId === userId);
+    const isRequester = Boolean(
+      userEmail && requesterEmail && userEmail === requesterEmail,
+    );
+
+    // 3. CLIENTE / COLABORADOR: Si creó el ticket o coincide el correo, se permite
+    if (userRolName === 'CLIENTE' || userRolName === 'COLABORADOR') {
       if (isCreator || isRequester) {
         return ticket;
       }
       throw new ForbiddenException('No tienes permiso para ver este ticket');
+    }
+
+    // Si tiene el permiso por creador o solicitante pero su rol no entró arriba
+    if (isCreator || isRequester) {
+      return ticket;
     }
 
     throw new ForbiddenException('No tienes permiso para ver este ticket');
