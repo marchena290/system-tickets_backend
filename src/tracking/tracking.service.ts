@@ -21,6 +21,17 @@ export class TrackingService {
     private readonly emailService: EmailService,
   ) {}
 
+  private getUserRoleName(user: User): UserRol | null {
+    const rawRol = typeof user.rol === 'object' ? user.rol?.name : user.rol;
+    const normalized = String(rawRol ?? '')
+      .toUpperCase()
+      .trim();
+
+    return (Object.values(UserRol) as string[]).includes(normalized)
+      ? (normalized as UserRol)
+      : null;
+  }
+
   async create(
     createTrackingDto: CreateTrackingDto,
     user: User,
@@ -89,8 +100,14 @@ export class TrackingService {
       );
     }
 
+    const userRoleName = this.getUserRoleName(user);
+
+    if (!userRoleName) {
+      throw new NotFoundException('Rol de usuario no válido');
+    }
+
     // 2. Verificar permisos según el rol del usuario
-    if (user.rol.name === UserRol.SUPERVISOR) {
+    if (userRoleName === UserRol.SUPERVISOR) {
       return await this.trackingRepository.find({
         order: { fecha_registro: 'DESC' },
         where: { TicketId: ticketId },
@@ -98,14 +115,7 @@ export class TrackingService {
       });
     }
 
-    if (user.rol.name === UserRol.SOPORTISTA) {
-      // Validar que el ticket esté asignado a él
-      if (!ticket.assignedTo || ticket.assignedTo.id !== user.id) {
-        throw new NotFoundException(
-          'No tienes permisos para ver estos seguimientos',
-        );
-      }
-
+    if (userRoleName === UserRol.SOPORTISTA) {
       // Retorna los trackings
       return await this.trackingRepository.find({
         order: { fecha_registro: 'DESC' },
@@ -115,11 +125,16 @@ export class TrackingService {
     }
 
     if (
-      user.rol.name === UserRol.COLABORADOR ||
-      user.rol.name === UserRol.CLIENTE
+      userRoleName === UserRol.COLABORADOR ||
+      userRoleName === UserRol.CLIENTE
     ) {
       // Validar que el ticket lo creó él
-      if (ticket.user.id !== user.id) {
+      const isCreator = ticket.user?.id === user.id;
+      const isRequester =
+        userRoleName === UserRol.CLIENTE &&
+        ticket.user?.email?.toLowerCase() === user.email?.toLowerCase();
+
+      if (!isCreator && !isRequester) {
         throw new NotFoundException(
           'No tienes permisos para ver estos seguimientos',
         );

@@ -43,6 +43,17 @@ export class TicketsService {
     private readonly usersService: UsersService,
   ) {}
 
+  private getUserRoleName(user: User): UserRol | null {
+    const rawRol = typeof user.rol === 'object' ? user.rol?.name : user.rol;
+    const normalized = String(rawRol ?? '')
+      .toUpperCase()
+      .trim();
+
+    return (Object.values(UserRol) as string[]).includes(normalized)
+      ? (normalized as UserRol)
+      : null;
+  }
+
   private calculateDeadline(category: TicketCategory | null): Date | null {
     if (!category) return null;
     const now = new Date();
@@ -200,8 +211,14 @@ export class TicketsService {
   // ✅ MÉTODO FINDALL
   // -----------------------------------------------------------------
   async findAll(user: User): Promise<Tickets[]> {
+    const userRoleName = this.getUserRoleName(user);
+
+    if (!userRoleName) {
+      throw new ForbiddenException('No tienes permiso para ver este ticket');
+    }
+
     // 1. FILTRO PARA CLIENTES
-    if (user.rol.name === UserRol.CLIENTE) {
+    if (userRoleName === UserRol.CLIENTE) {
       return await this.ticketsRepository.find({
         where: { requesterEmail: user.email },
         relations: ['user', 'assignedTo'],
@@ -210,7 +227,7 @@ export class TicketsService {
     }
 
     // 2. FILTRO PARA SUPERVISOR
-    if (user.rol.name === UserRol.SUPERVISOR) {
+    if (userRoleName === UserRol.SUPERVISOR) {
       return await this.ticketsRepository.find({
         // 🚀 CORRECCIÓN: ELIMINAR EL FILTRO 'where: notFinalizado'
         relations: ['user', 'assignedTo'],
@@ -219,7 +236,7 @@ export class TicketsService {
     }
 
     // 3. FILTRO PARA SOPORTISTA
-    if (user.rol.name === UserRol.SOPORTISTA) {
+    if (userRoleName === UserRol.SOPORTISTA) {
       // Mostrar todos los tickets para SOPORTISTA (no filtrar por estado)
       return await this.ticketsRepository.find({
         relations: ['user', 'assignedTo'],
@@ -248,14 +265,17 @@ export class TicketsService {
     }
 
     // Extraemos el rol asegurando compatibilidad con objetos o strings
-    const rawRol = typeof user.rol === 'object' ? user.rol?.name : user.rol;
-    const userRolName = String(rawRol || '')
-      .toUpperCase()
-      .trim();
+    const userRolName = this.getUserRoleName(user);
+
+    if (!userRolName) {
+      throw new ForbiddenException('No tienes permiso para ver este ticket');
+    }
 
     // 1. SUPERVISOR Y SOPORTISTA: Acceso total de lectura
-    // Usamos strings directos en mayúsculas para evitar el conflicto con el Enum
-    if (userRolName === 'SUPERVISOR' || userRolName === 'SOPORTISTA') {
+    if (
+      userRolName === UserRol.SUPERVISOR ||
+      userRolName === UserRol.SOPORTISTA
+    ) {
       return ticket;
     }
 
@@ -274,7 +294,10 @@ export class TicketsService {
     );
 
     // 3. CLIENTE / COLABORADOR: Si creó el ticket o coincide el correo, se permite
-    if (userRolName === 'CLIENTE' || userRolName === 'COLABORADOR') {
+    if (
+      userRolName === UserRol.CLIENTE ||
+      userRolName === UserRol.COLABORADOR
+    ) {
       if (isCreator || isRequester) {
         return ticket;
       }
@@ -316,7 +339,15 @@ export class TicketsService {
     const newCategoryRaw = dtoAny['category'] ?? dtoAny['categoria'];
     const newCategory = this.resolveCategory(newCategoryRaw); // Lógica de Permisos de actualización (Supervisores y Soportistas)
 
-    if (user.rol.name === UserRol.SUPERVISOR) {
+    const userRoleName = this.getUserRoleName(user);
+
+    if (!userRoleName) {
+      throw new ForbiddenException(
+        'No tienes permiso para modificar este ticket',
+      );
+    }
+
+    if (userRoleName === UserRol.SUPERVISOR) {
       if (updateTicketDto.title || dtoAny['asunto'])
         ticket.title = (updateTicketDto.title || dtoAny['asunto']) as string;
       if (updateTicketDto.description || dtoAny['descripcion'])
@@ -333,7 +364,7 @@ export class TicketsService {
       }
 
       if (newStatus) ticket.status = newStatus;
-    } else if (user.rol.name === UserRol.SOPORTISTA) {
+    } else if (userRoleName === UserRol.SOPORTISTA) {
       if (updateTicketDto.description || dtoAny['descripcion'])
         ticket.description = (updateTicketDto.description ||
           dtoAny['descripcion']) as string;
@@ -354,7 +385,7 @@ export class TicketsService {
           );
         }
       }
-    } else if (user.rol.name === UserRol.COLABORADOR) {
+    } else if (userRoleName === UserRol.COLABORADOR) {
       if (ticket.user.id !== user.id)
         throw new ForbiddenException(
           'No tienes permiso para modificar este ticket',
@@ -368,7 +399,7 @@ export class TicketsService {
       if (updateTicketDto.type || dtoAny['tipo']) {
         ticket.type = (updateTicketDto.type || dtoAny['tipo']) as TicketType;
       }
-    } else if (user.rol.name === UserRol.CLIENTE) {
+    } else if (userRoleName === UserRol.CLIENTE) {
       throw new ForbiddenException(
         'El rol Cliente no puede modificar tickets, solo agregar seguimientos',
       );
@@ -449,7 +480,7 @@ export class TicketsService {
   } // ... (El resto del código de la clase se mantiene sin cambios) ...// --- Los demás métodos (remove, claim, assignTo, saveEvidence) no han sido modificados ---
   async remove(id: number, user: User): Promise<{ message: string }> {
     const ticket = await this.findOne(id, user);
-    if (user.rol.name !== UserRol.SUPERVISOR)
+    if (this.getUserRoleName(user) !== UserRol.SUPERVISOR)
       throw new ForbiddenException(
         'No tienes permiso para eliminar este ticket',
       );
@@ -458,9 +489,17 @@ export class TicketsService {
   }
 
   async claim(id: number, user: User): Promise<Tickets> {
+    const userRoleName = this.getUserRoleName(user);
+
+    if (!userRoleName) {
+      throw new ForbiddenException(
+        'No tienes permiso para reclamar este ticket',
+      );
+    }
+
     if (
-      user.rol.name !== UserRol.SOPORTISTA &&
-      user.rol.name !== UserRol.SUPERVISOR
+      userRoleName !== UserRol.SOPORTISTA &&
+      userRoleName !== UserRol.SUPERVISOR
     ) {
       throw new ForbiddenException(
         'No tienes permiso para reclamar este ticket',
@@ -504,7 +543,7 @@ export class TicketsService {
     });
     if (!ticket)
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
-    if (user.rol.name !== UserRol.SUPERVISOR)
+    if (this.getUserRoleName(user) !== UserRol.SUPERVISOR)
       throw new ForbiddenException('No tienes permiso para asignar tickets');
 
     const soportista = await this.userRepository.findOne({
@@ -534,10 +573,10 @@ export class TicketsService {
 
     const isCreator = ticket.user && ticket.user.id === user.id;
     const isAssigned = ticket.assignedTo && ticket.assignedTo.id === user.id;
-    const isSupervisor = user?.rol?.name === UserRol.SUPERVISOR; // ✅ PERMISO: Se añade el rol CLIENTE al permiso si él es el solicitante original
+    const userRoleName = this.getUserRoleName(user);
+    const isSupervisor = userRoleName === UserRol.SUPERVISOR; // ✅ PERMISO: Se añade el rol CLIENTE al permiso si él es el solicitante original
     const isRequesterClient =
-      user?.rol?.name === UserRol.CLIENTE &&
-      ticket.requesterEmail === user.email;
+      userRoleName === UserRol.CLIENTE && ticket.requesterEmail === user.email;
 
     if (!isCreator && !isAssigned && !isSupervisor && !isRequesterClient)
       throw new ForbiddenException(
