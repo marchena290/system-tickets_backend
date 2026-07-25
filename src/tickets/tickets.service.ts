@@ -286,6 +286,15 @@ export class TicketsService {
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
     }
 
+    console.log('DEBUG CHECK TICKET PERMISSIONS:', {
+      userId: user?.id,
+      userRole: (user as any)?.role,
+      userRol: user?.rol,
+      ticketId: ticket?.id,
+      createdById: ticket?.user?.id,
+      assignedToId: ticket?.assignedTo?.id,
+    });
+
     if (!this.getUserRoleName(user)) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
