@@ -258,7 +258,7 @@ export class TicketsService {
       return ticket;
     }
 
-    // 2. CLIENTE: Valida contra requesterEmail
+    // 2. CLIENTE: Valida contra requesteremail
     if (userRolName === UserRol.CLIENTE) {
       if (
         ticket.requesterEmail &&
