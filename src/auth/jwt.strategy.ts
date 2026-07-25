@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: number; rol: string }) {
+  async validate(payload: { sub: number; rol?: string; role?: string }) {
     const user = await this.userRepository.findOne({
       where: { id: payload.sub },
       relations: ['rol'],
@@ -30,7 +30,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token no válido');
     }
 
-    if (user.rol?.name !== payload.rol) {
+    const tokenRole = payload.rol ?? payload.role;
+    if (tokenRole && user.rol?.name !== tokenRole) {
       throw new UnauthorizedException('Token no válido');
     }
 

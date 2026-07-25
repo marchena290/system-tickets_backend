@@ -8,7 +8,7 @@ import {
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import {
   Tickets,
   TicketStatus,
@@ -52,6 +52,53 @@ export class TicketsService {
     return (Object.values(UserRol) as string[]).includes(normalized)
       ? (normalized as UserRol)
       : null;
+  }
+
+  private canReadTicket(ticket: Tickets, user: User): boolean {
+    const userRoleName = this.getUserRoleName(user);
+
+    if (
+      userRoleName === UserRol.SUPERVISOR ||
+      userRoleName === UserRol.SOPORTISTA
+    ) {
+      return true;
+    }
+
+    const userId = Number(user.id);
+    const userEmail = String(user.email ?? '')
+      .toLowerCase()
+      .trim();
+    const creatorId = ticket.user?.id ? Number(ticket.user.id) : null;
+    const assignedToId = ticket.assignedTo?.id ? Number(ticket.assignedTo.id) : null;
+    const requesterEmail = String(ticket.requesterEmail ?? '')
+      .toLowerCase()
+      .trim();
+
+    return (
+      creatorId === userId ||
+      assignedToId === userId ||
+      (userEmail.length > 0 && requesterEmail.length > 0 && userEmail === requesterEmail)
+    );
+  }
+
+  private getReadableTicketsWhere(user: User, userRoleName: UserRol) {
+    if (
+      userRoleName === UserRol.SUPERVISOR ||
+      userRoleName === UserRol.SOPORTISTA
+    ) {
+      return {};
+    }
+
+    const where: FindOptionsWhere<Tickets>[] = [];
+
+    if (user.email) {
+      where.push({ requesterEmail: user.email });
+    }
+
+    where.push({ user: { id: user.id } });
+    where.push({ assignedTo: { id: user.id } });
+
+    return where;
   }
 
   private calculateDeadline(category: TicketCategory | null): Date | null {
@@ -217,38 +264,13 @@ export class TicketsService {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
-    // 1. FILTRO PARA CLIENTES
-    if (userRoleName === UserRol.CLIENTE) {
-      return await this.ticketsRepository.find({
-        where: { requesterEmail: user.email },
-        relations: ['user', 'assignedTo'],
-        order: { id: 'DESC' },
-      });
-    }
+    const readableTicketsWhere = this.getReadableTicketsWhere(
+      user,
+      userRoleName,
+    );
 
-    // 2. FILTRO PARA SUPERVISOR
-    if (userRoleName === UserRol.SUPERVISOR) {
-      return await this.ticketsRepository.find({
-        // 🚀 CORRECCIÓN: ELIMINAR EL FILTRO 'where: notFinalizado'
-        relations: ['user', 'assignedTo'],
-        order: { id: 'DESC' },
-      });
-    }
-
-    // 3. FILTRO PARA SOPORTISTA
-    if (userRoleName === UserRol.SOPORTISTA) {
-      // Mostrar todos los tickets para SOPORTISTA (no filtrar por estado)
-      return await this.ticketsRepository.find({
-        relations: ['user', 'assignedTo'],
-        order: { id: 'DESC' },
-      });
-    }
-
-    // 4. FILTRO PARA COLABORADOR
     return await this.ticketsRepository.find({
-      where: {
-        user: { id: user.id },
-      },
+      where: readableTicketsWhere,
       relations: ['user', 'assignedTo'],
       order: { id: 'DESC' },
     });
@@ -264,48 +286,11 @@ export class TicketsService {
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
     }
 
-    // Extraemos el rol asegurando compatibilidad con objetos o strings
-    const userRolName = this.getUserRoleName(user);
-
-    if (!userRolName) {
+    if (!this.getUserRoleName(user)) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
-    // 1. SUPERVISOR Y SOPORTISTA: Acceso total de lectura
-    if (
-      userRolName === UserRol.SUPERVISOR ||
-      userRolName === UserRol.SOPORTISTA
-    ) {
-      return ticket;
-    }
-
-    // 2. Normalizar emails e IDs para validación de pertenencia
-    const userEmail = user.email ? user.email.toLowerCase().trim() : '';
-    const requesterEmail = ticket.requesterEmail
-      ? ticket.requesterEmail.toLowerCase().trim()
-      : '';
-
-    const userId = Number(user.id);
-    const creatorId = ticket.user?.id ? Number(ticket.user.id) : null;
-
-    const isCreator = Boolean(creatorId && creatorId === userId);
-    const isRequester = Boolean(
-      userEmail && requesterEmail && userEmail === requesterEmail,
-    );
-
-    // 3. CLIENTE / COLABORADOR: Si creó el ticket o coincide el correo, se permite
-    if (
-      userRolName === UserRol.CLIENTE ||
-      userRolName === UserRol.COLABORADOR
-    ) {
-      if (isCreator || isRequester) {
-        return ticket;
-      }
-      throw new ForbiddenException('No tienes permiso para ver este ticket');
-    }
-
-    // Si tiene el permiso por creador o solicitante pero su rol no entró arriba
-    if (isCreator || isRequester) {
+    if (this.canReadTicket(ticket, user)) {
       return ticket;
     }
 

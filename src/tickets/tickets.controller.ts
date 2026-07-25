@@ -51,13 +51,25 @@ export class TicketsController {
     return this.ticketsService.create(createTicketDto, user);
   }
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    UserRol.SUPERVISOR,
+    UserRol.SOPORTISTA,
+    UserRol.COLABORADOR,
+    UserRol.CLIENTE,
+  )
   findAll(@GetUser() user: User) {
     return this.ticketsService.findAll(user);
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    UserRol.SUPERVISOR,
+    UserRol.SOPORTISTA,
+    UserRol.COLABORADOR,
+    UserRol.CLIENTE,
+  )
   findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
     return this.ticketsService.findOne(id, user);
   }

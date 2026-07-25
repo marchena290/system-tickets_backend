@@ -108,9 +108,12 @@ export class AuthService {
   }
 
   private generateToken(user: User): string {
+    const roleName = user.rol.name;
     const payload = {
       sub: user.id,
-      rol: user.rol.name,
+      rol: roleName,
+      role: roleName,
+      roles: [roleName],
     };
     return this.jwtService.sign(payload);
   }
