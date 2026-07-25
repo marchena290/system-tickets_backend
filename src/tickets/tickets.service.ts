@@ -243,22 +243,33 @@ export class TicketsService {
       relations: ['user', 'assignedTo'],
     });
 
-    if (!ticket)
-      throw new NotFoundException(`Ticket con ID ${id} no encontrado`); // ✅ PERMISO PARA CLIENTE
+    if (!ticket) {
+      throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
+    }
 
-    if (user.rol.name === UserRol.CLIENTE) {
+    // Casteamos el rol a UserRol para que coincida con los tipos del Enum
+    const userRol = user?.rol?.name;
+
+    // 1. SUPERVISOR Y SOPORTISTA: Acceso total de lectura
+    if (userRol === UserRol.SUPERVISOR || userRol === UserRol.SOPORTISTA) {
+      return ticket;
+    }
+
+    // 2. CLIENTE: Valida contra requesterEmail
+    if (userRol === UserRol.CLIENTE) {
       if (ticket.requesterEmail === user.email) return ticket;
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
-    if (user.rol.name === UserRol.SUPERVISOR) return ticket;
+    // 3. COLABORADOR: Comprobar id de creador de forma segura
+    if (userRol === UserRol.COLABORADOR) {
+      const creatorId = ticket.user?.id;
+      const isCreator = creatorId && Number(creatorId) === Number(user.id);
+      const isRequester = ticket.requesterEmail === user.email;
 
-    if (user.rol.name === UserRol.SOPORTISTA) {
-      return ticket;
-    }
-
-    if (user.rol.name === UserRol.COLABORADOR) {
-      if (ticket.user.id === user.id) return ticket;
+      if (isCreator || isRequester) {
+        return ticket;
+      }
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
