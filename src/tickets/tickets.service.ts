@@ -247,25 +247,40 @@ export class TicketsService {
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
     }
 
-    // Casteamos el rol a UserRol para que coincida con los tipos del Enum
-    const userRol = user?.rol?.name;
+    // Casteamos de forma segura para evitar advertencias de ESLint
+    const userRolName = user?.rol?.name as UserRol | undefined;
 
     // 1. SUPERVISOR Y SOPORTISTA: Acceso total de lectura
-    if (userRol === UserRol.SUPERVISOR || userRol === UserRol.SOPORTISTA) {
+    if (
+      userRolName === UserRol.SUPERVISOR ||
+      userRolName === UserRol.SOPORTISTA
+    ) {
       return ticket;
     }
 
     // 2. CLIENTE: Valida contra requesterEmail
-    if (userRol === UserRol.CLIENTE) {
-      if (ticket.requesterEmail === user.email) return ticket;
+    if (userRolName === UserRol.CLIENTE) {
+      if (
+        ticket.requesterEmail &&
+        user.email &&
+        ticket.requesterEmail.toLowerCase() === user.email.toLowerCase()
+      ) {
+        return ticket;
+      }
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
-    // 3. COLABORADOR: Comprobar id de creador de forma segura
-    if (userRol === UserRol.COLABORADOR) {
+    // 3. COLABORADOR: Comprobar creador de ticket o correo del solicitante
+    if (userRolName === UserRol.COLABORADOR) {
       const creatorId = ticket.user?.id;
-      const isCreator = creatorId && Number(creatorId) === Number(user.id);
-      const isRequester = ticket.requesterEmail === user.email;
+      const isCreator = Boolean(
+        creatorId && Number(creatorId) === Number(user.id),
+      );
+      const isRequester = Boolean(
+        ticket.requesterEmail &&
+          user.email &&
+          ticket.requesterEmail.toLowerCase() === user.email.toLowerCase(),
+      );
 
       if (isCreator || isRequester) {
         return ticket;
