@@ -8,7 +8,7 @@ import {
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, Repository, ILike } from 'typeorm';
 import {
   Tickets,
   TicketStatus,
@@ -44,14 +44,18 @@ export class TicketsService {
   ) {}
 
   private getUserRoleName(user: User): UserRol | null {
+    if (!user) return null;
+
     const rawRol = typeof user.rol === 'object' ? user.rol?.name : user.rol;
     const normalized = String(rawRol ?? '')
       .toUpperCase()
       .trim();
 
-    return (Object.values(UserRol) as string[]).includes(normalized)
-      ? (normalized as UserRol)
-      : null;
+    const matchedRole = (Object.values(UserRol) as string[]).find(
+      (role) => role.toUpperCase().trim() === normalized,
+    );
+
+    return (matchedRole as UserRol) ?? null;
   }
 
   private canReadTicket(ticket: Tickets, user: User): boolean {
@@ -69,7 +73,9 @@ export class TicketsService {
       .toLowerCase()
       .trim();
     const creatorId = ticket.user?.id ? Number(ticket.user.id) : null;
-    const assignedToId = ticket.assignedTo?.id ? Number(ticket.assignedTo.id) : null;
+    const assignedToId = ticket.assignedTo?.id
+      ? Number(ticket.assignedTo.id)
+      : null;
     const requesterEmail = String(ticket.requesterEmail ?? '')
       .toLowerCase()
       .trim();
@@ -77,7 +83,9 @@ export class TicketsService {
     return (
       creatorId === userId ||
       assignedToId === userId ||
-      (userEmail.length > 0 && requesterEmail.length > 0 && userEmail === requesterEmail)
+      (userEmail.length > 0 &&
+        requesterEmail.length > 0 &&
+        userEmail === requesterEmail)
     );
   }
 
@@ -92,7 +100,8 @@ export class TicketsService {
     const where: FindOptionsWhere<Tickets>[] = [];
 
     if (user.email) {
-      where.push({ requesterEmail: user.email });
+      // ✅ Usamos ILike para ignorar mayúsculas y minúsculas en el email
+      where.push({ requesterEmail: ILike(user.email.trim()) });
     }
 
     where.push({ user: { id: user.id } });
@@ -162,7 +171,7 @@ export class TicketsService {
     if (dto.newStatus) {
       ticket.status = dto.newStatus as unknown as TicketStatus;
       await this.ticketsRepository.save(ticket);
-    } // ✅ NOTIFICACIÓN DE SEGUIMIENTO: Prioriza el requesterEmail guardado
+    }
 
     const destinatario = ticket.requesterEmail ?? ticket.user?.email ?? null;
 
@@ -179,16 +188,13 @@ export class TicketsService {
     }
 
     return saved;
-  } // -----------------------------------------------------------------
-  // ✅ MÉTODO CREATE
-  // -----------------------------------------------------------------
+  }
+
   async create(createTicketDto: CreateTicketDto, user: User): Promise<Tickets> {
-    // 💡 Paso 1: Extraer el objeto requester
     const requesterData = createTicketDto.requester;
-    let solicitante: User | null = null; // Eliminamos 'finalUser' para simplificar y usar siempre 'user' como creador del ticket.
-    // 2. Lógica de Auto-Registro (si existe el objeto requester)
+    let solicitante: User | null = null;
+
     if (requesterData) {
-      // Creamos el objeto DTO que usersService.createClientUser espera.
       const clientUserData: CreateUserDto = {
         email: requesterData.email,
         nombreCompleto: requesterData.name,
@@ -197,26 +203,23 @@ export class TicketsService {
         contacto: 'N/A',
         password: randomBytes(12).toString('hex'),
         rol: UserRol.CLIENTE,
-      }; // Creamos/Recuperamos al cliente externo (Ricardo)
+      };
 
       solicitante = await this.usersService.createClientUser(clientUserData);
     }
 
     const title = createTicketDto.title;
-    const resolvedCategory = this.resolveCategory(createTicketDto.category); // Determinar el email y nombre del solicitante real para notificaciones y filtros:
-    // Si hay 'solicitante' (cliente externo), usamos sus datos. Si no, usamos los del 'user' logueado (Juan).
+    const resolvedCategory = this.resolveCategory(createTicketDto.category);
     const destinatarioEmail = solicitante?.email ?? user.email;
-    const destinatarioName = solicitante?.nombreCompleto ?? user.nombreCompleto; // El usuario logueado (Juan) siempre es el que crea el registro de ticket.
+    const destinatarioName = solicitante?.nombreCompleto ?? user.nombreCompleto;
     const userForTicket = user;
 
     const payload: Partial<Tickets> = {
       title: title,
       description: createTicketDto.description,
       type: createTicketDto.type,
-      status: TicketStatus.ABIERTO, // ✅ El campo 'user' del ticket es siempre el usuario logueado.
-
-      user: userForTicket, // ✅ Guardamos los datos del Solicitante
-
+      status: TicketStatus.ABIERTO,
+      user: userForTicket,
       requesterEmail: destinatarioEmail,
       requesterName: destinatarioName,
     };
@@ -224,7 +227,7 @@ export class TicketsService {
     if (resolvedCategory) {
       payload.category = resolvedCategory;
       payload.deadlineAt = this.calculateDeadline(resolvedCategory);
-    } // Comprobación de existencia y longitud de evidencia
+    }
 
     if (
       createTicketDto.evidenceUrls &&
@@ -234,7 +237,7 @@ export class TicketsService {
     }
 
     const newTicket = this.ticketsRepository.create(payload);
-    const ticketGuardado = await this.ticketsRepository.save(newTicket); // ✅ NOTIFICACIÓN DE CREACIÓN
+    const ticketGuardado = await this.ticketsRepository.save(newTicket);
 
     if (destinatarioEmail && ticketGuardado?.id) {
       try {
@@ -254,11 +257,16 @@ export class TicketsService {
 
     return ticketGuardado;
   }
-  // -----------------------------------------------------------------
-  // ✅ MÉTODO FINDALL
-  // -----------------------------------------------------------------
+
   async findAll(user: User): Promise<Tickets[]> {
     const userRoleName = this.getUserRoleName(user);
+
+    this.logger.debug('FINDALL USER CHECK:', {
+      userId: user?.id,
+      userEmail: user?.email,
+      detectedRole: userRoleName,
+      rawRolObj: user?.rol,
+    });
 
     if (!userRoleName) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
@@ -286,16 +294,18 @@ export class TicketsService {
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
     }
 
-    console.log('DEBUG CHECK TICKET PERMISSIONS:', {
+    const userRoleName = this.getUserRoleName(user);
+
+    this.logger.debug('FINDONE PERMISSIONS CHECK:', {
       userId: user?.id,
-      userRole: (user as any)?.role,
-      userRol: user?.rol,
+      userRole: userRoleName,
       ticketId: ticket?.id,
       createdById: ticket?.user?.id,
       assignedToId: ticket?.assignedTo?.id,
+      requesterEmail: ticket?.requesterEmail,
     });
 
-    if (!this.getUserRoleName(user)) {
+    if (!userRoleName) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
 
@@ -311,7 +321,7 @@ export class TicketsService {
     updateTicketDto: UpdateTicketDto,
     user: User,
   ): Promise<Tickets> {
-    this.logger.debug(`Iniciando actualización para Ticket ID: ${id}`); // 🛑 LOG 1
+    this.logger.debug(`Iniciando actualización para Ticket ID: ${id}`);
     const oldTicket = await this.ticketsRepository.findOne({
       where: { id },
       relations: ['user', 'assignedTo'],
@@ -319,7 +329,6 @@ export class TicketsService {
 
     if (!oldTicket)
       throw new NotFoundException(`Ticket con ID ${id} no encontrado`);
-    this.logger.debug(`Ticket antiguo recuperado. Status: ${oldTicket.status}`); // 🛑 LOG 2
 
     const oldStatus = oldTicket.status;
     const oldCategory = oldTicket.category;
@@ -331,7 +340,7 @@ export class TicketsService {
       | undefined;
 
     const newCategoryRaw = dtoAny['category'] ?? dtoAny['categoria'];
-    const newCategory = this.resolveCategory(newCategoryRaw); // Lógica de Permisos de actualización (Supervisores y Soportistas)
+    const newCategory = this.resolveCategory(newCategoryRaw);
 
     const userRoleName = this.getUserRoleName(user);
 
@@ -401,31 +410,21 @@ export class TicketsService {
       throw new ForbiddenException(
         'No tienes permiso para modificar este ticket',
       );
-    } // -------------------------------------------------------------------------
-    // 🛑 Lógica de la Fecha de Finalización: Corregida
-    // -------------------------------------------------------------------------
+    }
 
     if (
       newStatus === TicketStatus.FINALIZADO &&
       oldStatus !== TicketStatus.FINALIZADO
     ) {
       ticket.ultimaActualizacion = new Date();
-      this.logger.debug(
-        `Status cambiado a FINALIZADO. Configurando ultimaActualizacion.`,
-      ); // 🛑 LOG 3
-    } // -------------------------------------------------------------------------
-    // 🛑 Guardado simple y seguro: Usamos .save() (Bloque corregido)
-    // -------------------------------------------------------------------------
-
-    this.logger.debug('Intentando guardar el ticket con .save()...'); // 🛑 LOG 4
+    }
 
     let updatedTicket: Tickets;
     try {
-      // 1. Guardar la entidad (TypeORM resuelve las FKs y la fecha)
-      await this.ticketsRepository.save(ticket); // 2. Recuperar el ticket completo con sus relaciones para la respuesta
+      await this.ticketsRepository.save(ticket);
 
       const retrievedTicket = await this.ticketsRepository.findOne({
-        where: { id }, // Usamos el ID original
+        where: { id },
         relations: ['user', 'assignedTo'],
       });
 
@@ -435,7 +434,7 @@ export class TicketsService {
         );
       }
 
-      updatedTicket = retrievedTicket; // Asignamos el ticket recuperado
+      updatedTicket = retrievedTicket;
     } catch (dbError) {
       this.logger.error('FALLO CRÍTICO AL GUARDAR EL TICKET EN DB:', dbError);
       throw new BadRequestException(
@@ -443,11 +442,8 @@ export class TicketsService {
       );
     }
 
-    this.logger.debug(
-      'Ticket guardado exitosamente. Revisando notificaciones...',
-    ); // 🛑 LOG 5
-    // eslint-disable-next-line prettier/prettier
-    const destinatarioEmail = updatedTicket.requesterEmail ?? updatedTicket.user?.email;
+    const destinatarioEmail =
+      updatedTicket.requesterEmail ?? updatedTicket.user?.email;
 
     const statusChanged = oldStatus !== updatedTicket.status;
     const categoryChanged = oldCategory !== updatedTicket.category;
@@ -469,9 +465,9 @@ export class TicketsService {
       }
     }
 
-    this.logger.debug('Update finalizado.'); // 🛑 LOG 6
     return updatedTicket;
-  } // ... (El resto del código de la clase se mantiene sin cambios) ...// --- Los demás métodos (remove, claim, assignTo, saveEvidence) no han sido modificados ---
+  }
+
   async remove(id: number, user: User): Promise<{ message: string }> {
     const ticket = await this.findOne(id, user);
     if (this.getUserRoleName(user) !== UserRol.SUPERVISOR)
@@ -568,7 +564,7 @@ export class TicketsService {
     const isCreator = ticket.user && ticket.user.id === user.id;
     const isAssigned = ticket.assignedTo && ticket.assignedTo.id === user.id;
     const userRoleName = this.getUserRoleName(user);
-    const isSupervisor = userRoleName === UserRol.SUPERVISOR; // ✅ PERMISO: Se añade el rol CLIENTE al permiso si él es el solicitante original
+    const isSupervisor = userRoleName === UserRol.SUPERVISOR;
     const isRequesterClient =
       userRoleName === UserRol.CLIENTE && ticket.requesterEmail === user.email;
 
@@ -603,7 +599,6 @@ export class TicketsService {
 
   async findAllForMetrics(): Promise<Tickets[]> {
     return await this.ticketsRepository.find({
-      // Sin condición 'where' para traer tickets FINALIZADOS.
       relations: ['user', 'assignedTo'],
       order: { id: 'DESC' },
     });

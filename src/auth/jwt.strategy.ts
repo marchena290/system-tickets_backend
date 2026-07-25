@@ -30,9 +30,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token no válido');
     }
 
-    const tokenRole = payload.rol ?? payload.role;
-    if (tokenRole && user.rol?.name !== tokenRole) {
-      throw new UnauthorizedException('Token no válido');
+    const tokenRoleRaw = payload.rol ?? payload.role;
+
+    // Validación segura y flexible libre de errores de ESLint
+    if (tokenRoleRaw) {
+      const dbRoleName = String(user.rol?.name ?? '')
+        .toUpperCase()
+        .trim();
+      const tokenRoleName = String(tokenRoleRaw).toUpperCase().trim();
+
+      if (dbRoleName !== tokenRoleName) {
+        throw new UnauthorizedException('Token no válido');
+      }
     }
 
     return user;
