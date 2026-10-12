@@ -166,9 +166,6 @@ export class TicketsController {
           const p = join(process.cwd(), 'uploads', f.filename);
           if (fs.existsSync(p)) {
             fs.unlinkSync(p);
-            this.logger.debug(
-              `[uploadEvidence] deleted uploaded file after error: ${p}`,
-            );
           }
         }
       } catch (cleanupErr) {

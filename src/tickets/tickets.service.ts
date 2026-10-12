@@ -261,13 +261,6 @@ export class TicketsService {
   async findAll(user: User): Promise<Tickets[]> {
     const userRoleName = this.getUserRoleName(user);
 
-    this.logger.debug('FINDALL USER CHECK:', {
-      userId: user?.id,
-      userEmail: user?.email,
-      detectedRole: userRoleName,
-      rawRolObj: user?.rol,
-    });
-
     if (!userRoleName) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
@@ -296,15 +289,6 @@ export class TicketsService {
 
     const userRoleName = this.getUserRoleName(user);
 
-    this.logger.debug('FINDONE PERMISSIONS CHECK:', {
-      userId: user?.id,
-      userRole: userRoleName,
-      ticketId: ticket?.id,
-      createdById: ticket?.user?.id,
-      assignedToId: ticket?.assignedTo?.id,
-      requesterEmail: ticket?.requesterEmail,
-    });
-
     if (!userRoleName) {
       throw new ForbiddenException('No tienes permiso para ver este ticket');
     }
@@ -321,7 +305,6 @@ export class TicketsService {
     updateTicketDto: UpdateTicketDto,
     user: User,
   ): Promise<Tickets> {
-    this.logger.debug(`Iniciando actualización para Ticket ID: ${id}`);
     const oldTicket = await this.ticketsRepository.findOne({
       where: { id },
       relations: ['user', 'assignedTo'],

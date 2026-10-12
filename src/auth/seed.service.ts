@@ -14,7 +14,6 @@ export class SeedService {
     const rolesCount = await this.rolRepository.count();
 
     if (rolesCount > 0) {
-      console.log('✅ Los roles ya existen');
       return;
     }
 
@@ -25,6 +24,5 @@ export class SeedService {
     ];
 
     await this.rolRepository.save(roles);
-    console.log('🌱 Roles creados con éxito');
   }
 }
