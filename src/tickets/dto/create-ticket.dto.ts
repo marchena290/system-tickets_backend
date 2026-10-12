@@ -70,5 +70,5 @@ export class CreateTicketDto {
 
   @IsOptional()
   @IsString({ each: true })
-  evidenceUrls?: string[];
+  evidenceUrl?: string[];
 }

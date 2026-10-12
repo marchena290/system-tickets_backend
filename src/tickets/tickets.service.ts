@@ -230,10 +230,11 @@ export class TicketsService {
     }
 
     if (
-      createTicketDto.evidenceUrls &&
-      createTicketDto.evidenceUrls.length > 0
+      createTicketDto.evidenceUrl &&
+      createTicketDto.evidenceUrl &&
+      createTicketDto.evidenceUrl.length > 0
     ) {
-      payload.evidenciaUrl = JSON.stringify(createTicketDto.evidenceUrls);
+      payload.evidenciaUrl = JSON.stringify(createTicketDto.evidenceUrl);
     }
 
     const newTicket = this.ticketsRepository.create(payload);

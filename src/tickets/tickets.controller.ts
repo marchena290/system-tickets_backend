@@ -179,8 +179,9 @@ export class TicketsController {
         err,
       );
       // Re-throw a safe error for client
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      throw new BadRequestException(err?.message || 'Failed to save evidence.');
+      throw new BadRequestException(
+        (err as Error) || 'Failed to save evidence.',
+      );
     }
   }
 }

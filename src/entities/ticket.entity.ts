@@ -60,7 +60,10 @@ export class Tickets {
   @Column({ nullable: true })
   evidenciaUrl: string;
 
-  @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp with time zone' })
+  @CreateDateColumn({
+    name: 'fecha_creacion',
+    type: 'timestamp with time zone',
+  })
   fechaCreacion: Date;
 
   @UpdateDateColumn({
