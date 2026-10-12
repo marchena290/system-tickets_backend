@@ -78,7 +78,7 @@ export class TrackingService {
       description: createTrackingDto.description,
       ticket: ticket,
       usuario: user,
-      TicketId: ticket.id,
+      ticketId: ticket.id,
       UsuarioId: user.id,
     });
 
@@ -110,7 +110,7 @@ export class TrackingService {
     if (userRoleName === UserRol.SUPERVISOR) {
       return await this.trackingRepository.find({
         order: { fecha_registro: 'DESC' },
-        where: { TicketId: ticketId },
+        where: { ticketId },
         relations: ['ticket', 'usuario'],
       });
     }
@@ -119,7 +119,7 @@ export class TrackingService {
       // Retorna los trackings
       return await this.trackingRepository.find({
         order: { fecha_registro: 'DESC' },
-        where: { TicketId: ticketId },
+        where: { ticketId },
         relations: ['ticket', 'usuario'],
       });
     }
@@ -143,7 +143,7 @@ export class TrackingService {
       // Retorna los trackings
       return await this.trackingRepository.find({
         order: { fecha_registro: 'DESC' },
-        where: { TicketId: ticketId },
+        where: { ticketId },
         relations: ['ticket', 'usuario'],
       });
     }

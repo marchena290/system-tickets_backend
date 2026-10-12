@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Tickets } from './ticket.entity';
 
@@ -14,10 +20,11 @@ export class Tracking {
   @ManyToOne(() => Tickets, (ticket) => ticket.trackings, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'ticketId' })
   ticket: Tickets;
 
-  @Column()
-  TicketId: number;
+  @Column({ name: 'ticketId' })
+  ticketId: number;
 
   @ManyToOne(() => User, (user) => user.tracking, { eager: true })
   usuario: User;

@@ -161,7 +161,7 @@ export class TicketsService {
     const newTracking = this.trackingRepository.create({
       description: dto.comment,
       ticket: ticket,
-      TicketId: ticket.id,
+      ticketId: ticket.id,
       usuario: user,
       UsuarioId: user.id,
     });
