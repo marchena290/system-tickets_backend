@@ -37,7 +37,7 @@ export class User {
   isActive: boolean;
 
   @ManyToOne(() => Rol)
-  @JoinColumn({ name: 'rol_Id' })
+  @JoinColumn({ name: 'rol_id' })
   rol: Rol;
 
   @OneToMany(() => Tickets, (ticket) => ticket.assignedTo)
