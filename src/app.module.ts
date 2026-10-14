@@ -12,12 +12,28 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string()
+          .valid('development', 'production', 'test')
+          .default('development'),
+        PORT: Joi.number().port().default(4200),
+        JWT_SECRET: Joi.string().min(32).required(),
+        DATABASE_URL: Joi.string().uri({ scheme: ['postgres', 'postgresql'] }),
+        DB_HOST: Joi.string().default('localhost'),
+        DB_PORT: Joi.number().port().default(5432),
+        DB_USER: Joi.string().default('postgres'),
+        DB_PASSWORD: Joi.string().default('postgres'),
+        DB_TICKETS: Joi.string().default('tickets_db'),
+        BCRYPT_SALT_ROUNDS: Joi.number().integer().min(10).max(31).default(12),
+        FRONTEND_ORIGIN: Joi.string().uri({ scheme: ['http', 'https'] }),
+      }),
     }),
 
     ThrottlerModule.forRoot({

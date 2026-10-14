@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { Tickets, TicketStatus } from '../entities/ticket.entity';
@@ -129,7 +134,9 @@ export class ReportsService {
         'Error al ejecutar getLoadBySoportista:',
         (error as Error).stack,
       );
-      return [];
+      throw new InternalServerErrorException(
+        'No se pudo obtener la carga de trabajo de los soportistas',
+      );
     }
   }
 

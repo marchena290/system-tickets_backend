@@ -4,6 +4,7 @@ import { join } from 'path';
 import * as fs from 'fs';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,36 +28,36 @@ async function bootstrap() {
     }),
   );
 
-  // 2. Obtener y limpiar los orígenes permitidos
-  const rawOrigins =
-    process.env.CORS_ORIGINS ||
-    process.env.FRONTEND_ORIGIN ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:3000';
+  const isProduction = process.env.NODE_ENV === 'production';
+  const frontendOrigin = process.env.FRONTEND_ORIGIN?.trim().replace(/\/$/, '');
 
-  // Elimina espacios y barras diagonales al final (ej: "https://...app/" -> "https://...app")
-  const allowedOrigins = rawOrigins
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/$/, ''))
-    .filter(Boolean);
+  if (isProduction && !frontendOrigin) {
+    throw new Error(
+      'FALTA CONFIGURAR FRONTEND_ORIGIN EN LAS VARIABLES DE ENTORNO DE PRODUCCIÓN',
+    );
+  }
 
-  // 3. Habilitar CORS
+  const allowedOrigins = isProduction
+    ? [frontendOrigin]
+    : ['http://localhost:3000', 'http://localhost:4200'];
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Si no hay origin (ej: Postman, llamadas servidor a servidor) o está en la lista
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-        return callback(null, true);
+        callback(null, true);
+        return;
       }
       logger.warn(`CORS bloqueado para el origen: ${origin}`);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-      return callback(new Error(`CORS rejected for origin: ${origin}`), false);
+      callback(new Error('CORS origin not allowed'), false);
     },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
   });
+
+  const expressInstance = app.getHttpAdapter().getInstance();
+  expressInstance.set('trust proxy', 1);
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const uploadsPath = join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsPath)) {

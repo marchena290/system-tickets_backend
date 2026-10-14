@@ -59,6 +59,7 @@ uploads/*
 # Artefactos de respaldo/locales
 *.bak
 npm-audit.json
+auditoria.md
 
 # Migraciones SQL locales
 migrations/*.sql
